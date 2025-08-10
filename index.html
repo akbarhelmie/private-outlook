@@ -3,608 +3,648 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Intelligence Dashboard — 5-Vision (Client-only, 1080p)</title>
+<title>Five-Vision Intelligence Dashboard — Single File</title>
 
-<!-- Tailwind for UI -->
+<!-- Tailwind CDN for compact UI -->
 <script src="https://cdn.tailwindcss.com"></script>
 <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
 <style>
-  :root { --bg:#07101a; --panel:rgba(10,14,20,0.92); --muted:#9fb0c8; }
-  body { margin:0; background:var(--bg); color:#ecf6ff; font-family:'Nunito',sans-serif; overflow:hidden; }
-  #left { position:absolute; left:12px; top:12px; width:420px; max-height:96vh; overflow:auto; background:var(--panel); padding:14px; border-radius:10px; border:1px solid rgba(255,255,255,0.04); z-index:210; }
-  h1 { margin:0 0 6px 0; font-weight:700; font-size:18px; }
+  :root{
+    --bg:#071019;
+    --panel: rgba(8,12,18,0.62);
+    --panel-strong: rgba(8,12,18,0.78);
+    --muted:#9fb0c8;
+    --accent:#39b0ff;
+    --glass-border: rgba(255,255,255,0.04);
+  }
+  html,body { height:100%; margin:0; background:linear-gradient(180deg,#04101a 0%, #071019 60%); font-family:'Nunito',sans-serif; color:#e8f6ff; overflow:hidden; }
+  /* Left UI: only 5 visions */
+  #left {
+    position:absolute; left:16px; top:16px; width:420px; max-height:calc(100vh - 32px);
+    padding:14px; border-radius:12px; background:var(--panel);
+    border:1px solid var(--glass-border); backdrop-filter: blur(8px);
+    overflow:auto; z-index:220;
+  }
+  h1 { margin:0; font-size:18px; font-weight:700; }
   .small { font-size:13px; color:var(--muted); }
-  .module { background:rgba(255,255,255,0.02); padding:10px; border-radius:8px; margin-bottom:8px; border:1px solid rgba(255,255,255,0.02); }
-  .pill { background:rgba(255,255,255,0.03); padding:6px 8px; border-radius:6px; border:1px solid rgba(255,255,255,0.02); cursor:pointer; font-size:13px; }
+  .module { background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.006)); padding:10px; border-radius:10px; margin-top:12px; border:1px solid rgba(255,255,255,0.02); }
+  .pill { background:rgba(255,255,255,0.03); padding:6px 9px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); cursor:pointer; font-size:13px; }
   .news-item { padding:8px; border-bottom:1px solid rgba(255,255,255,0.02); }
-  .node-label { cursor:pointer; font-weight:700; color:#eaf4ff; padding:4px 6px; border-radius:6px; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.03); }
-  #hud { position:absolute; right:12px; top:12px; z-index:200; }
-  #triggers { max-height:160px; overflow:auto; }
-  input[type="file"]{ display:block; margin-top:8px; }
-  .warning { color:#ffb4b4; font-size:12px; }
-  canvas { display:block; }
+  .node-label { cursor:pointer; font-weight:700; color: #eaf4ff; padding:4px 8px; border-radius:8px; background:rgba(0,0,0,0.36); border:1px solid rgba(255,255,255,0.03); font-size:13px; }
+  .muted { color:var(--muted) }
+  /* Transparent, elegant vertical scrollbar */
+  #left::-webkit-scrollbar { width:10px; }
+  #left::-webkit-scrollbar-track { background: linear-gradient(180deg, transparent, rgba(255,255,255,0.01)); border-radius:10px; }
+  #left::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.06)); border-radius:10px; border:2px solid transparent; background-clip: padding-box; }
+  /* HUD on right */
+  #hud { position:absolute; right:16px; top:16px; z-index:210; width:360px; max-height:calc(100vh - 32px); overflow:auto; padding:12px; background:var(--panel); border-radius:10px; border:1px solid var(--glass-border); backdrop-filter: blur(6px); }
+  #graph-container { position:absolute; left:0; right:0; top:0; bottom:0; z-index:10; }
+  /* compact lists */
+  .compact-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
+  .warning { color:#ffb4b4; font-size:13px; }
+  a.link { color:var(--accent); text-decoration:underline; }
+  /* responsive label sizes */
+  .css-label { font-size:13px; padding:4px 8px; border-radius:6px; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.03); }
+  /* small icons */
+  .icon { width:18px; height:18px; display:inline-block; vertical-align:middle; margin-right:6px; opacity:0.9; }
 </style>
 </head>
 <body>
-  <div id="left">
-    <h1>Intelligence Dashboard — 5 Vision</h1>
-    <div class="small">Single-file, client-only. 1080p render; nodes include top crypto (up to 1,000), imported assets, and people. News filtered to free/non-paywalled sources within 24 hours.</div>
+  <div id="left" role="navigation" aria-label="Five Vision Controls">
+    <h1>Five-Vision Intelligence — Single File</h1>
+    <div class="small mt-1">Real-time market signals, news (<24h free sources), people nodes, and an Autonomous Layer (local indicators & rules). No uploads needed.</div>
 
-    <!-- Vision panels (only the 5 you asked for) -->
-    <div class="module mt-3">
-      <strong>Vision 1 — Real-Time Intelligence Dashboard</strong>
-      <div class="small">Live market snapshots, portfolio exposure and top movers.</div>
-      <div class="mt-2">
-        <button id="btn-refresh-markets" class="pill">Refresh Markets (CoinGecko)</button>
-        <button id="btn-load-top1000" class="pill">Load Top 1,000 Cryptos</button>
+    <!-- Vision 1 -->
+    <div class="module" id="vision-1">
+      <div class="compact-row"><div><strong>Vision 1 — Real-Time Intelligence</strong><div class="small">Live top assets & snapshot</div></div>
+        <div><button class="pill" id="btn-refresh-markets">Refresh Markets</button></div>
       </div>
-      <div id="market-summary" class="small mt-2">Market: —</div>
+      <div id="market-summary" class="small mt-2">Loading markets...</div>
       <div id="market-list" style="max-height:220px; overflow:auto; margin-top:8px;" class="small"></div>
     </div>
 
-    <div class="module">
-      <strong>Vision 2 — AI Command Center</strong>
-      <div class="small">Upload research files, run "mission-mode" summarizer (local template), and get tactical checklists. (LLM integration optional — I kept it local-safe.)</div>
-      <div class="mt-2">
-        <input id="file-input" type="file" multiple />
-        <button id="btn-summarize" class="pill mt-2">Summarize Uploaded Files (local)</button>
+    <!-- Vision 2 -->
+    <div class="module" id="vision-2">
+      <div class="compact-row"><div><strong>Vision 2 — AI Command Center</strong><div class="small">Local mission-mode: auto-summaries & checklists</div></div>
+        <div><button class="pill" id="btn-run-mission">Run Mission</button></div>
       </div>
-      <div id="ai-output" class="small mt-2"></div>
+      <div id="ai-output" class="small mt-2">No missions run yet.</div>
     </div>
 
-    <div class="module">
-      <strong>Vision 3 — Global Market Manipulation Radar</strong>
-      <div class="small">DexScreener boosts, unusual volume hits (from CoinGecko 24h delta heuristic), and flagged anomalies.</div>
-      <div class="mt-2">
-        <button id="btn-refresh-dexs" class="pill">Refresh DexScreener</button>
-        <button id="btn-scan-anomalies" class="pill">Run Anomaly Scan</button>
+    <!-- Vision 3 -->
+    <div class="module" id="vision-3">
+      <div class="compact-row"><div><strong>Vision 3 — Market Manipulation Radar</strong><div class="small">DexS boosts & anomaly scans</div></div>
+        <div><button class="pill" id="btn-refresh-dexs">Scan DexS</button></div>
       </div>
-      <div id="dexs-status" class="small mt-2">DexS: idle</div>
-      <div id="radar-list" style="max-height:140px; overflow:auto; margin-top:8px;" class="small"></div>
+      <div id="radar-list" class="small mt-2">Loading radar...</div>
     </div>
 
-    <div class="module">
-      <strong>Vision 4 — Human Network Monitor</strong>
-      <div class="small">Nodes for influential people — import CSV or use built-in sample list. AI suggests who to contact for specific objectives.</div>
-      <div class="mt-2">
-        <input id="people-csv" type="file" accept=".csv" />
-        <button id="btn-load-sample-people" class="pill">Load Sample Influencers</button>
+    <!-- Vision 4 -->
+    <div class="module" id="vision-4">
+      <div class="compact-row"><div><strong>Vision 4 — Human Network</strong><div class="small">Influencers & decision-history (auto-enriched)</div></div>
+        <div><button class="pill" id="btn-load-people">Load People</button></div>
       </div>
-      <div id="people-list" class="small mt-2"></div>
+      <div id="people-list" class="small mt-2">No people loaded yet.</div>
     </div>
 
-    <div class="module">
-      <strong>Vision 5 — Autonomous Action Layer (local)</strong>
-      <div class="small">Create IF-THIS-THEN rules. Rules run locally against market/DexS/news. When matched, an action plan (multi-vision) is generated. No execution (safe).</div>
-      <div class="mt-2">
-        <div class="small">Rule type:
-          <select id="rule-type" class="pill">
-            <option value="price-drop">Price Drop (%)</option>
-            <option value="dexs-boost">DexS Boost</option>
-            <option value="news">News Keyword</option>
-          </select>
-        </div>
-        <div class="mt-2 small">Symbol/Keyword: <input id="rule-symbol" class="pill" placeholder="e.g. btc or 'bankruptcy'"/></div>
-        <div class="mt-2 small">Threshold / Hours: <input id="rule-threshold" class="pill" placeholder="7 (percent)"/> <input id="rule-hours" class="pill" placeholder="6 (hours)"/></div>
-        <div class="mt-2"><button id="btn-add-rule" class="pill">Add Rule</button></div>
+    <!-- Vision 5 -->
+    <div class="module" id="vision-5">
+      <div class="compact-row"><div><strong>Vision 5 — Autonomous Layer</strong><div class="small">IF-THIS-THEN-THAT local rules (indicators & news)</div></div>
+        <div><button class="pill" id="btn-add-rule">Add Rule</button></div>
       </div>
-      <div id="rules-list" class="small mt-2"></div>
+      <div class="small mt-2">Rule editor below (quick add):</div>
+      <div class="mt-2 small">
+        <select id="rule-kind" class="pill">
+          <option value="price-drop">Price drop % in H</option>
+          <option value="indicator">Indicator condition</option>
+          <option value="news">News keyword</option>
+          <option value="dexs">DexS Boost</option>
+        </select>
+        <input id="rule-subj" class="pill" placeholder="symbol or keyword" style="width:130px"/>
+        <input id="rule-th" class="pill" placeholder="threshold" style="width:80px"/>
+        <input id="rule-hours" class="pill" placeholder="hours" style="width:70px"/>
+        <div id="rules-list" class="small mt-2"></div>
+      </div>
     </div>
 
-    <div class="module">
-      <strong>News — free, <24h</strong>
-      <div class="small">Auto-refreshing free sources only (no FT/WSJ paywall). Polling every 60s.</div>
-      <div class="mt-2"><button id="btn-refresh-news" class="pill">Refresh News</button></div>
-      <div id="news-list" style="max-height:180px; overflow:auto; margin-top:8px;"></div>
-    </div>
-
-    <div class="small mt-2 warning">Security: no API keys or private keys are stored or requested. If you want equities/global fundamentals, supply an API key via the CSV/import options or ask me to add a backend relay (recommended).</div>
+    <div class="small mt-3 muted">Notes: news sources are free and filtered to 24 hours. I used Cluely's clean meeting UI as inspiration for minimalism and translucency. :contentReference[oaicite:1]{index=1}</div>
+    <div class="small mt-2 warning">Security: this page never requests private keys. No uploads are required — everything auto-loads.</div>
   </div>
 
-  <!-- HUD (small status) -->
-  <div id="hud" class="small"></div>
+  <!-- HUD / logs -->
+  <div id="hud" aria-live="polite">
+    <div style="display:flex;justify-content:space-between;align-items:center">
+      <div><strong>Overview</strong><div class="small">Status & triggers</div></div>
+      <div><button id="btn-show-triggers" class="pill">Show</button></div>
+    </div>
+    <div id="triggers" class="small mt-2" style="max-height:340px; overflow:auto;">No triggers yet.</div>
+  </div>
 
-  <!-- Three.js -->
+  <!-- Graph container (Three.js) -->
+  <div id="graph-container"></div>
+
+  <!-- External libs -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
 
+  <!-- Technical indicators library -->
+  <script src="https://unpkg.com/technicalindicators@3.0.3/dist/browser.js"></script>
+
 <script>
-/* ------------------------------------------------------------------
-   Single-file Intelligence Dashboard (client-only)
-   - 1080p/DPR=1 render
-   - Top-1000 cryptos via CoinGecko (paged)
-   - DexScreener boosts
-   - Free news (<24h)
-   - 5 Vision side UI (no render controls)
-   - IF-THEN rule engine runs locally (every 20s)
-   - Nodes: cryptos + imported assets + people
-   ------------------------------------------------------------------*/
+/* -------------------------------------------
+   Single-file Intelligence Dashboard
+   - Client-only; no file uploads required
+   - CoinGecko for market data (paging top ~1000)
+   - News via free RSS sources (<24h) using public CORS helper (allorigins)
+   - DexScreener best-effort (may hit CORS)
+   - People auto-enrichment via Wikipedia & Google News RSS (best-effort)
+   - Local indicator calculations via technicalindicators
+   - IF-THIS-THEN rules engine runs periodically
+   ------------------------------------------- */
 
-/* ---------- CONFIG / GLOBALS ---------- */
-const COINGECKO = 'https://api.coingecko.com/api/v3';
-const DEXS = 'https://api.dexscreener.com';
-const CORS_PROXY = 'https://api.allorigins.win/raw?url=';
-const NEWS_SOURCES = [
-  {id:'reuters', rss:'https://www.reuters.com/rssFeed/wealth'},
-  {id:'bloomberg', rss:'https://www.bloomberg.com/feed/podcast/etf-report.xml'},
-  {id:'investing', rss:'https://www.investing.com/rss/news.rss'},
-  {id:'cnbc', rss:'https://www.cnbc.com/id/10001147/device/rss/rss.html'},
-  {id:'yahoo', rss:'https://finance.yahoo.com/rss/'},
-  {id:'coindesk', rss:'https://www.coindesk.com/arc/outboundfeeds/rss/'},
-  {id:'cointelegraph', rss:'https://cointelegraph.com/rss'},
-  {id:'decrypt', rss:'https://decrypt.co/feed'},
-  {id:'cryptonews', rss:'https://cryptonews.com/news/feed/'}
+/* ---------------- CONFIG ---------------- */
+const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
+const DEXS_BASE = 'https://api.dexscreener.com';
+const CORS_PROXY_RAW = 'https://api.allorigins.win/raw?url='; // public proxy used to avoid CORS for RSS
+const NEWS_RSS_SOURCES = [
+  'https://www.reuters.com/rssFeed/wealth',
+  'https://www.investing.com/rss/news_25.rss',
+  'https://finance.yahoo.com/rss/',
+  'https://www.coindesk.com/arc/outboundfeeds/rss/',
+  'https://cointelegraph.com/rss',
+  'https://decrypt.co/feed',
+  'https://cryptonews.com/news/feed/'
 ];
+const PEOPLE_SAMPLE = [
+  { id:'elon', name:'Elon Musk' },
+  { id:'buffett', name:'Warren Buffett' },
+  { id:'larryfink', name:'Larry Fink' },
+  { id:'cathiewood', name:'Cathie Wood' }
+];
+const MAX_COIN_PAGES = 4; // 4 * 250 = 1000 coins
+const POLL_MARKET_MS = 25_000;
+const POLL_NEWS_MS = 60_000;
+const RULE_EVAL_MS = 20_000;
 
-let marketState = {};       // symbol -> {id,name,price,market_cap,change_24h}
-let peopleState = {};       // id -> {name,role,notes}
-let dexsState = [];         // array of dexs entries
-let rules = [];             // local rule engine
-let triggers = [];          // triggered events
-let newsCache = [];         // recent articles (<24h)
+/* ---------- STATE ---------- */
+let marketState = {};        // symbol -> coin object
+let peopleState = {};        // id -> profile (enriched)
+let dexsState = [];          // DexS entries
+let newsCache = [];          // recent articles (<24h)
+let rules = [];              // local rules
+let triggers = [];           // matched triggers
 
-/* ---------- UI helpers ---------- */
+/* ---------- UTIL ---------- */
 function $(id){ return document.getElementById(id); }
-function fmt(n){ if(n===null||n===undefined) return '-'; if(n>=1e9) return (n/1e9).toFixed(2)+'B'; if(n>=1e6) return (n/1e6).toFixed(2)+'M'; if(n>=1e3) return (n/1e3).toFixed(2)+'k'; return Number(n).toFixed(4).replace(/\.?0+$/,''); }
-function nowISO(){ return new Date().toISOString(); }
+function CL(msg){ console.log('[Dash]', msg); }
+function fmtMoney(n){ if(n===null||n===undefined) return '-'; if(n>=1e9) return (n/1e9).toFixed(2)+'B'; if(n>=1e6) return (n/1e6).toFixed(2)+'M'; if(n>=1e3) return (n/1e3).toFixed(2)+'k'; return Number(n).toFixed(4).replace(/\.?0+$/,''); }
 
-/* ---------- MARKET: fetch top N cryptos (CoinGecko) ---------- */
-/* CoinGecko supports per_page upto 250; we page 4x to get ~1000 */
-async function loadTopCryptos(limit=1000){
-  const per_page = 250;
-  const pages = Math.ceil(limit / per_page);
-  marketState = {}; // reset token map (we keep imported equities separate)
+/* ---------- MARKETS: load CoinGecko top ~1000 ---------- */
+async function loadTopCryptos(pages=MAX_COIN_PAGES){
+  $('market-summary').textContent = 'Loading top assets...';
+  marketState = {};
   for (let p=1; p<=pages; p++){
-    try{
-      const url = `${COINGECKO}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${per_page}&page=${p}&price_change_percentage=24h`;
-      const r = await fetch(url);
-      if (!r.ok) throw new Error('status '+r.status);
-      const arr = await r.json();
+    try {
+      const url = `${COINGECKO_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=${p}&price_change_percentage=24h`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('CoinGecko rate or CORS: '+res.status);
+      const arr = await res.json();
       arr.forEach(c => {
-        const sym = (c.symbol || '').toLowerCase();
-        marketState[sym] = { id:c.id, symbol:sym, name:c.name, price:c.current_price, market_cap:c.market_cap, change_24h:c.price_change_percentage_24h, last_updated:c.last_updated };
+        const sym = (c.symbol||'').toLowerCase();
+        marketState[sym] = {
+          id: c.id, symbol: sym, name: c.name, price: c.current_price, market_cap: c.market_cap,
+          change_24h: c.price_change_percentage_24h, last_updated: c.last_updated
+        };
       });
-      // small delay to be polite
-      await new Promise(r=>setTimeout(r, 300));
-    }catch(err){
-      console.warn('loadTopCryptos page', p, 'failed', err);
-      // continue - do not abort entire load
+      // be polite
+      await new Promise(r=>setTimeout(r, 250));
+    } catch (e){
+      CL('loadTopCryptos page ' + p + ' err: ' + e.message);
+      // continue to next page attempt
     }
   }
   renderMarketList();
-  $('market-summary').textContent = `Loaded ~${Object.keys(marketState).length} cryptos (CoinGecko).`;
+  $('market-summary').textContent = `Loaded ${Object.keys(marketState).length} crypto assets (CoinGecko).`;
 }
 
 /* Render market list (compact) */
 function renderMarketList(){
-  const c = $('market-list'); c.innerHTML = '';
-  const arr = Object.values(marketState).sort((a,b)=>(b.market_cap||0)-(a.market_cap||0)).slice(0,500);
+  const cont = $('market-list'); cont.innerHTML = '';
+  const arr = Object.values(marketState).sort((a,b)=>(b.market_cap||0)-(a.market_cap||0)).slice(0,300);
   arr.forEach(m=>{
-    const div = document.createElement('div'); div.style.padding='6px'; div.style.borderBottom='1px solid rgba(255,255,255,0.02)';
-    div.innerHTML = `<div style="display:flex;justify-content:space-between"><div><strong style="text-transform:uppercase">${m.symbol}</strong> <span class="small"> ${m.name}</span></div>
-      <div><button class="pill inspect" data-sym="${m.symbol}">Inspect</button></div></div>
-      <div class="small">Price: $${fmt(m.price)} • MC: ${fmt(m.market_cap)} • 24h: ${m.change_24h ? m.change_24h.toFixed(2)+'%' : '-'}</div>`;
-    c.appendChild(div);
+    const div = document.createElement('div'); div.className = 'compact-row'; div.style.padding='8px'; div.style.borderBottom='1px solid rgba(255,255,255,0.02)';
+    const left = document.createElement('div'); left.innerHTML = `<strong style="text-transform:uppercase">${m.symbol}</strong> <div class="small muted">${m.name}</div>`;
+    const right = document.createElement('div'); right.innerHTML = `<div class="small">Price: $${fmtMoney(m.price)}<br/>24h: ${m.change_24h ? m.change_24h.toFixed(2)+'%' : '-'}</div><div style="margin-top:6px"><button class="pill btn-pin" data-sym="${m.symbol}">Pin</button></div>`;
+    div.appendChild(left); div.appendChild(right);
+    cont.appendChild(div);
   });
-  c.querySelectorAll('.inspect').forEach(b => b.addEventListener('click', ()=> inspectSymbol(b.dataset.sym)));
+  cont.querySelectorAll('.btn-pin').forEach(b=> b.addEventListener('click', ()=> pinAsset(b.dataset.sym)));
 }
 
-/* ---------- DEXSCREENER (boosts) ---------- */
-async function refreshDexS(){
-  $('dexs-status').textContent = 'Fetching DexS boosts...';
-  try{
-    const res = await fetch(`${DEXS}/token-boosts/latest/v1`);
-    if (!res.ok) throw new Error('DexS status '+res.status);
+/* ---------- PIN / NODE interaction ---------- */
+let pinned = new Set();
+function pinAsset(sym){
+  pinned.add(sym.toLowerCase());
+  // highlight node or create it
+  CL('Pinned ' + sym);
+  renderPinnedList();
+  // add node to graph for visibility
+  if (window._graph && window._graph.addAssetNodesBatch){
+    const coin = marketState[sym.toLowerCase()];
+    if (coin) window._graph.addAssetNodesBatch([coin]);
+  }
+}
+function renderPinnedList(){
+  const h = $('market-summary');
+  if (pinned.size === 0) h.textContent += ' • No pins';
+  else h.textContent += ' • Pinned: ' + Array.from(pinned).slice(0,6).map(s=>s.toUpperCase()).join(', ');
+}
+
+/* ---------- DexScreener fetch (best-effort) ---------- */
+async function fetchDexS(){
+  $('radar-list').textContent = 'Fetching DexS (best-effort)...';
+  try {
+    const res = await fetch(`${DEXS_BASE}/token-boosts/latest/v1`);
+    if (!res.ok) throw new Error('DexS status ' + res.status);
     const j = await res.json();
     dexsState = j.boosts || j.data || [];
     renderDexs();
-    $('dexs-status').textContent = 'DexS loaded (' + (dexsState.length||0) + ')';
-  }catch(err){
-    console.warn('DexS fetch failed', err);
-    $('dexs-status').textContent = 'DexS fetch failed (CORS/rate-limit). Use proxy if needed.';
+  } catch (e) {
+    CL('DexS fetch error: ' + e.message);
+    $('radar-list').innerHTML = '<div class="small muted">DexS fetch failed (CORS or rate-limit). Showing local anomalies only.</div>';
     dexsState = [];
-    renderDexs();
   }
 }
 function renderDexs(){
   const node = $('radar-list'); node.innerHTML = '';
-  if (!dexsState || dexsState.length===0){ node.innerHTML = '<div class="small">No DexS signals loaded.</div>'; return; }
-  dexsState.slice(0,60).forEach((it, i)=>{
-    const sym = (it.tokenSymbol || '').toUpperCase();
-    const li = document.createElement('div'); li.style.padding='6px'; li.style.borderBottom='1px solid rgba(255,255,255,0.02)';
-    li.innerHTML = `<div style="display:flex;justify-content:space-between"><div><strong>${sym}</strong> <span class="small">${it.tokenName||''}</span></div><div><button class="pill import-dex" data-i="${i}">Import</button></div></div><div class="small">chain:${it.chainId || ''} ${it.liquidity ? ' • liq:'+it.liquidity : ''}</div>`;
-    node.appendChild(li);
+  if (!dexsState || dexsState.length === 0){ node.innerHTML = '<div class="small muted">No DexS signals loaded.</div>'; return; }
+  dexsState.slice(0,80).forEach((d, i)=>{
+    const sym = (d.tokenSymbol||'').toUpperCase();
+    const div = document.createElement('div'); div.style.padding='8px'; div.style.borderBottom='1px solid rgba(255,255,255,0.02)';
+    div.innerHTML = `<div><strong>${sym}</strong> <div class="small muted">${d.tokenName||''}</div></div><div class="small">chain:${d.chainId||''} ${d.liquidity? ' • liq:'+d.liquidity : ''}</div>`;
+    node.appendChild(div);
   });
-  node.querySelectorAll('.import-dex').forEach(b => b.addEventListener('click', async ()=> {
-    const idx = parseInt(b.dataset.i), item = dexsState[idx];
-    if (!item) return alert('Not available');
-    const sym = (item.tokenSymbol || '').toLowerCase();
-    // optimistic add, then try to resolve via CoinGecko search
-    marketState[sym] = marketState[sym] || { id:null, symbol:sym, name:item.tokenName||'', price:null, market_cap:null };
-    renderMarketList();
-    try{
-      const q = encodeURIComponent(item.tokenName || item.tokenSymbol || '');
-      const r = await fetch(`${COINGECKO}/search?query=${q}`);
-      const j = await r.json();
-      if (j.coins && j.coins.length>0){
-        const id = j.coins[0].id;
-        const r2 = await fetch(`${COINGECKO}/coins/markets?vs_currency=usd&ids=${encodeURIComponent(id)}`);
-        const j2 = await r2.json();
-        if (j2 && j2[0]){
-          marketState[sym] = { id:j2[0].id, symbol:sym, name:j2[0].name, price:j2[0].current_price, market_cap:j2[0].market_cap, change_24h:j2[0].price_change_percentage_24h };
-          renderMarketList();
-          alert('Imported & resolved via CoinGecko: ' + sym.toUpperCase());
-        } else alert('Imported but CoinGecko resolution failed');
-      } else alert('Imported but no CoinGecko match');
-    }catch(e){ console.warn('resolve err', e); alert('Imported but resolution failed; see console.'); }
-  }));
 }
 
-/* ---------- NEWS: free sources, <24 hours, auto-refresh ---------- */
+/* ---------- NEWS: free sources (<24h) ---------- */
 async function fetchNews24h(){
-  const container = $('news-list');
-  container.innerHTML = '<div class="small">Fetching recent free news (last 24h)...</div>';
+  const cont = $('radar-list');
+  // we render news separately into newsCache and people news
+  newsCache = [];
   const cutoff = Date.now() - 24*3600*1000;
-  const articles = [];
-  for (const s of NEWS_SOURCES){
-    try{
-      const proxied = `${CORS_PROXY}${encodeURIComponent(s.rss)}`;
-      const r = await fetch(proxied);
-      if (!r.ok) { console.warn('news source failed', s.id); continue; }
-      const text = await r.text();
-      const xml = new DOMParser().parseFromString(text, 'text/xml');
+  for (const src of NEWS_RSS_SOURCES){
+    try {
+      const prox = CORS_PROXY_RAW + encodeURIComponent(src);
+      const r = await fetch(prox);
+      if (!r.ok) continue;
+      const txt = await r.text();
+      const xml = new DOMParser().parseFromString(txt, 'text/xml');
       const items = xml.querySelectorAll('item');
-      let c=0;
-      items.forEach(it=>{
-        if (c++ > 10) return;
-        const title = it.querySelector('title') ? it.querySelector('title').textContent : null;
-        const link = it.querySelector('link') ? it.querySelector('link').textContent : null;
+      items.forEach((it, idx) => {
+        if (idx > 6) return;
+        const title = it.querySelector('title') ? it.querySelector('title').textContent : '';
+        const link = it.querySelector('link') ? it.querySelector('link').textContent : (it.querySelector('guid') ? it.querySelector('guid').textContent : '#');
         const pub = it.querySelector('pubDate') ? it.querySelector('pubDate').textContent : null;
         if (!pub) return;
         const ts = Date.parse(pub);
         if (isNaN(ts)) return;
-        if (ts >= cutoff) articles.push({source:s.id, title, link, ts});
+        if (ts >= cutoff) newsCache.push({source: src, title, link, ts});
       });
-    }catch(err){
-      console.warn('news fetch error', s.id, err);
+      await new Promise(r=>setTimeout(r,120));
+    } catch (e) {
+      CL('news fetch fail ' + src + ' : ' + e.message);
     }
   }
-  // sort newest first
-  articles.sort((a,b)=> b.ts - a.ts);
-  newsCache = articles;
-  container.innerHTML = '';
-  if (articles.length===0) { container.innerHTML = '<div class="small">No free articles found in the last 24 hours.</div>'; return; }
-  articles.slice(0,60).forEach(a=>{
+  newsCache.sort((a,b)=> b.ts - a.ts);
+  // render top news into a small compact view on HUD (re-using radar area)
+  const newsNode = $('radar-list');
+  newsNode.innerHTML = '';
+  if (newsCache.length === 0) {
+    newsNode.innerHTML = '<div class="small muted">No free news in the last 24 hours.</div>';
+    return;
+  }
+  newsCache.slice(0,40).forEach(a=>{
     const el = document.createElement('div'); el.className='news-item';
-    el.innerHTML = `<div style="font-weight:700">${a.title}</div><div class="small">${a.source} • ${new Date(a.ts).toLocaleString()}</div><div style="margin-top:6px"><a target="_blank" rel="noreferrer" href="${a.link}">Open</a></div>`;
-    container.appendChild(el);
+    el.innerHTML = `<div style="font-weight:700">${a.title}</div><div class="small muted">${new Date(a.ts).toLocaleString()}</div><div style="margin-top:6px"><a class="link" target="_blank" rel="noreferrer" href="${a.link}">Open</a></div>`;
+    newsNode.appendChild(el);
   });
 }
 
-/* ---------- PEOPLE / INFLUENCERS (sample) ---------- */
-const SAMPLE_PEOPLE = [
-  { id:'elon', name:'Elon Musk', role:'CEO Tesla / SpaceX / xAI', notes:'Known for aggressive product-forward decisions, large social media influence; watch sentiment & large share movements.' },
-  { id:'warren', name:'Warren Buffett', role:'Chairman Berkshire Hathaway', notes:'Value investor; long-term, conservative moves; watch major M&A / 13F filings.' },
-  { id:'larryf', name:'Larry Fink', role:'CEO BlackRock', notes:'Influences large capital flows via ETFs and policy statements.' },
-  { id:'cathie', name:'Cathie Wood', role:'CEO Ark Invest', notes:'Active in high-conviction growth bets; large ETF flows can move small-cap liquidity.' }
-];
-
-function loadSamplePeople(){
-  SAMPLE_PEOPLE.forEach(p => peopleState[p.id] = p);
+/* ---------- PEOPLE: auto-enrich (Wikipedia summary + Google News) best-effort ---------- */
+async function enrichPeople(names){
+  const out = {};
+  for (const p of names){
+    try {
+      // Wikipedia summary
+      const slug = encodeURIComponent(p.name.replace(/\s+/g, '_'));
+      const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${slug}`;
+      const wikiRes = await fetch(wikiUrl);
+      const wiki = wikiRes.ok ? await wikiRes.json() : null;
+      // Google News RSS
+      const newsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(p.name)}`;
+      const prox = CORS_PROXY_RAW + encodeURIComponent(newsUrl);
+      const res = await fetch(prox);
+      let news = [];
+      if (res.ok){
+        const txt = await res.text();
+        const xml = new DOMParser().parseFromString(txt, 'text/xml');
+        const items = xml.querySelectorAll('item');
+        items.forEach((it, idx) => {
+          if (idx > 5) return;
+          news.push({
+            title: it.querySelector('title')?.textContent,
+            link: it.querySelector('link')?.textContent,
+            pubDate: it.querySelector('pubDate')?.textContent
+          });
+        });
+      }
+      out[p.id] = { id: p.id, name: p.name, wiki, recentNews: news };
+      // polite pause
+      await new Promise(r=>setTimeout(r,200));
+    } catch (e) {
+      CL('enrich ' + p.name + ' err ' + e.message);
+      out[p.id] = { id: p.id, name: p.name, wiki: null, recentNews: [] };
+    }
+  }
+  peopleState = {...peopleState, ...out};
   renderPeople();
 }
+
+/* Render people */
 function renderPeople(){
-  const n = $('people-list'); n.innerHTML = '';
+  const node = $('people-list'); node.innerHTML = '';
   Object.values(peopleState).forEach(p=>{
-    const d = document.createElement('div'); d.style.padding='6px'; d.style.borderBottom='1px solid rgba(255,255,255,0.02)';
-    d.innerHTML = `<div style="font-weight:700">${p.name} <span class="small">(${p.role})</span></div><div class="small">${p.notes}</div>`;
-    n.appendChild(d);
+    const div = document.createElement('div'); div.style.padding='8px'; div.style.borderBottom='1px solid rgba(255,255,255,0.02)';
+    div.innerHTML = `<div style="font-weight:700">${p.name}</div><div class="small muted">${p.wiki && p.wiki.extract ? p.wiki.extract.slice(0,240)+'...' : 'No wiki summary'}</div>`;
+    node.appendChild(div);
   });
 }
 
-/* CSV importer for people (simple: name,role,notes) */
-$('people-csv').addEventListener('change', (ev)=>{
-  const f = ev.target.files[0]; if (!f) return;
-  const reader = new FileReader(); reader.onload = (e)=>{
-    const text = e.target.result; const lines = text.split('\n').map(l=>l.trim()).filter(Boolean);
-    lines.forEach((ln, idx)=>{
-      const parts = ln.split(',').map(s=>s.trim());
-      const id = 'p'+Date.now()+idx;
-      peopleState[id] = { id, name: parts[0] || 'Unknown', role: parts[1] || '', notes: parts.slice(2).join(',') || '' };
-    });
-    renderPeople();
-  }; reader.readAsText(f);
-});
-
-/* ---------- RULE ENGINE (local) ---------- */
-/* Schema: { id, type, symbolOrKeyword, threshold, hours, active } */
+/* ---------- RULE ENGINE ---------- */
+/* Rules stored as { id, type, subj, threshold, hours, active } */
 function addRule(rule){
   rule.id = 'r'+Date.now();
-  rule.active = true;
   rules.push(rule);
   renderRules();
 }
 function renderRules(){
   const node = $('rules-list'); node.innerHTML = '';
-  if (rules.length===0){ node.innerHTML = '<div class="small">No rules configured.</div>'; return; }
+  if (rules.length === 0) { node.innerHTML = '<div class="small muted">No rules</div>'; return; }
   rules.forEach(r=>{
-    const div = document.createElement('div'); div.style.padding='6px'; div.style.borderBottom = '1px solid rgba(255,255,255,0.02)';
-    div.innerHTML = `<div class="small">${r.type} • ${r.symbolOrKeyword || ''} • ${r.threshold||''}${r.hours? ' • ' + r.hours+'h' : ''}</div>
-      <div style="margin-top:6px"><button class="pill btn-run" data-id="${r.id}">Run</button> <button class="pill btn-del" data-id="${r.id}">Delete</button></div>`;
+    const div = document.createElement('div'); div.style.padding='6px'; div.style.borderBottom='1px solid rgba(255,255,255,0.02)';
+    div.innerHTML = `<div class="small">[${r.type}] ${r.subj || ''} • th:${r.threshold || ''} • h:${r.hours || ''}</div>
+      <div style="margin-top:6px"><button class="pill btn-run" data-id="${r.id}">Run</button> <button class="pill btn-del" data-id="${r.id}">Del</button></div>`;
     node.appendChild(div);
   });
-  node.querySelectorAll('.btn-run').forEach(b => b.addEventListener('click', ()=> { const id=b.dataset.id; const ru = rules.find(x=>x.id===id); if (ru) evaluateRule(ru, true); }));
-  node.querySelectorAll('.btn-del').forEach(b => b.addEventListener('click', ()=> { rules = rules.filter(x=>x.id!==b.dataset.id); renderRules(); }));
+  node.querySelectorAll('.btn-run').forEach(b=> b.addEventListener('click', ()=> { const r = rules.find(x=>x.id===b.dataset.id); if (r) evaluateRule(r,true); }));
+  node.querySelectorAll('.btn-del').forEach(b=> b.addEventListener('click', ()=> { rules = rules.filter(x=>x.id!==b.dataset.id); renderRules(); }));
 }
 
-/* Evaluate rules: price-drop, dexs-boost, news */
-async function evaluateRule(rule, testRun=false){
-  if (rule.type === 'news'){
-    const kw = (rule.symbolOrKeyword||'').toLowerCase();
-    if (!kw) { if (testRun) alert('set keyword'); return false; }
-    const matches = newsCache.filter(a => (a.title||'').toLowerCase().includes(kw));
-    if (matches.length>0){ pushTrigger({rule, type:'news', matches, time:nowISO()}); if (!testRun) proposePlan({rule,matches}); else alert('news rule matched: '+matches.length); return true; }
-    if (testRun) alert('no matches');
-    return false;
-  }
-  if (rule.type === 'dexs-boost'){
-    const sym = (rule.symbolOrKeyword||'').toLowerCase();
-    if (!sym) { if (testRun) alert('set symbol'); return false; }
-    const match = dexsState.find(d => (d.tokenSymbol && d.tokenSymbol.toLowerCase()===sym) || (d.tokenName && d.tokenName.toLowerCase().includes(sym)));
-    if (match) { pushTrigger({rule, type:'dexs', match, time:nowISO()}); if (!testRun) proposePlan({rule,match}); else alert('DexS boost matched'); return true; }
-    if (testRun) alert('no dexs match');
-    return false;
-  }
-  if (rule.type === 'price-drop'){
-    const sym = (rule.symbolOrKeyword||'').toLowerCase();
-    if (!sym) { if (testRun) alert('set symbol'); return false; }
-    let coin = marketState[sym];
-    if (!coin){ if (testRun) alert('symbol not in market snapshot'); return false; }
-    try{
-      const hours = Math.max(1, parseInt(rule.hours||6));
-      const days = Math.ceil(hours/24);
-      const url = `${COINGECKO}/coins/${encodeURIComponent(coin.id)}/market_chart?vs_currency=usd&days=${days}&interval=hourly`;
-      const r = await fetch(url); const j = await r.json();
-      if (!j.prices || j.prices.length===0){ if (testRun) alert('no history'); return false; }
-      const cutoff = Date.now() - hours*3600*1000;
+/* Evaluate rule */
+async function evaluateRule(rule, notify=false){
+  try {
+    if (rule.type === 'news'){
+      const kw = (rule.subj||'').toLowerCase();
+      const matches = newsCache.filter(n => (n.title||'').toLowerCase().includes(kw));
+      if (matches.length > 0) {
+        pushTrigger({rule, type:'news', matches});
+        if (notify) alert('News rule matched: ' + matches.length + ' articles.');
+        return true;
+      } else { if (notify) alert('No news matched'); return false; }
+    }
+    if (rule.type === 'dexs'){
+      const subj = (rule.subj||'').toLowerCase();
+      const hit = dexsState.find(d => (d.tokenSymbol && d.tokenSymbol.toLowerCase()===subj) || (d.tokenName && d.tokenName.toLowerCase().includes(subj)));
+      if (hit){ pushTrigger({rule, type:'dexs', hit}); if (notify) alert('DexS match'); return true; }
+      if (notify) alert('No DexS match'); return false;
+    }
+    if (rule.type === 'price-drop'){
+      const sym = (rule.subj||'').toLowerCase();
+      const coin = marketState[sym];
+      if (!coin){ if (notify) alert('Symbol not in snapshot'); return false; }
+      const hours = Math.max(1, (rule.hours||6));
+      // fetch market chart from CoinGecko for 'days' approximating hours (1 day granularity if hours>24)
+      const days = Math.ceil(hours / 24);
+      const url = `${COINGECKO_BASE}/coins/${encodeURIComponent(coin.id)}/market_chart?vs_currency=usd&days=${days}&interval=hourly`;
+      const r = await fetch(url);
+      if (!r.ok) { if (notify) alert('chart fetch failed'); return false; }
+      const j = await r.json();
+      if (!j.prices || j.prices.length === 0){ if (notify) alert('no history'); return false; }
+      // find price at cutoff
+      const cutoff = Date.now() - (hours * 3600 * 1000);
       let pastPrice = j.prices[0][1];
-      for (let i=0;i<j.prices.length;i++){ if (j.prices[i][0] >= cutoff){ pastPrice = j.prices[i][1]; break; } }
-      const pct = ((coin.price - pastPrice)/pastPrice)*100;
-      if (pct <= -Math.abs(rule.threshold||0)){ pushTrigger({rule, type:'price', symbol:sym, pct, pastPrice, currentPrice:coin.price, time:nowISO()}); if (!testRun) proposePlan({rule,pct}); else alert(`${sym.toUpperCase()} moved ${pct.toFixed(2)}%`); return true; }
-      if (testRun) alert(`No match: ${pct.toFixed(2)}%`);
-      return false;
-    }catch(err){ console.error('rule eval err', err); if (testRun) alert('error see console'); return false; }
+      for (let i=0;i<j.prices.length;i++){
+        if (j.prices[i][0] >= cutoff){ pastPrice = j.prices[i][1]; break; }
+      }
+      const pct = ((coin.price - pastPrice) / pastPrice) * 100;
+      if (pct <= -Math.abs(rule.threshold || 0)){
+        pushTrigger({rule, type:'price', symbol: sym, pct, currentPrice: coin.price});
+        if (notify) alert(`${sym.toUpperCase()} moved ${pct.toFixed(2)}% in ${hours}h`);
+        return true;
+      } else { if (notify) alert(`No match: ${pct.toFixed(2)}%`); return false; }
+    }
+    if (rule.type === 'indicator'){
+      // subj format: symbol|INDICATOR:PARAMS e.g. btc|rsi:14<30  (means RSI(14) < 30)
+      const parts = (rule.subj||'').split('|');
+      if (parts.length < 2){ if (notify) alert('Bad indicator rule format'); return false; }
+      const sym = parts[0].toLowerCase();
+      const cond = parts[1]; // e.g. rsi:14<30
+      const coin = marketState[sym];
+      if (!coin){ if (notify) alert('symbol not loaded'); return false; }
+      const [indSpec, comparator] = cond.split(/(<=|>=|<|>)/).map(s=>s.trim());
+      const comp = cond.match(/(<=|>=|<|>)/)?.[0] || null;
+      const target = parseFloat(cond.split(comp)[1]);
+      // fetch OHLC-ish: use market_chart for '1' day to get hourly or minute series
+      const url = `${COINGECKO_BASE}/coins/${encodeURIComponent(coin.id)}/market_chart?vs_currency=usd&days=7&interval=hourly`;
+      const r = await fetch(url); if (!r.ok) { if (notify) alert('chart fetch failed'); return false; }
+      const j = await r.json();
+      if (!j.prices) { if (notify) alert('no history'); return false; }
+      // build arrays for indicators: close array (use prices)
+      const closes = j.prices.map(p => p[1]);
+      const highs = j.prices.map(p => p[1]); // approximate (CG returns only prices for free endpoint). For ATR/ADX we need high/low; approximating with same close (less accurate)
+      const lows = j.prices.map(p => p[1]);
+      // parse indSpec (e.g., rsi:14)
+      const [iname, iparam] = indSpec.split(':');
+      let value = null;
+      if (iname === 'rsi'){
+        const period = parseInt(iparam) || 14;
+        const res = technicalindicators.RSI.calculate({ period, values: closes });
+        value = res.length ? res[res.length-1] : null;
+      } else if (iname === 'macd'){
+        // macd:12,26,9
+        const [fast, slow, sig] = iparam ? iparam.split(',').map(x=>parseInt(x)) : [12,26,9];
+        const res = technicalindicators.MACD.calculate({ values: closes, fastPeriod:fast, slowPeriod:slow, signalPeriod:sig, SimpleMAOscillator:false, SimpleMASignal:false });
+        value = res.length ? res[res.length-1].histogram : null;
+      } else if (iname === 'bb'){ // bollinger band: period,std
+        const [period, std] = iparam ? iparam.split(',').map(x=>parseInt(x)) : [20,2];
+        const arr = technicalindicators.BollingerBands.calculate({ period, values: closes, stdDev: std });
+        if (arr.length) { const last = arr[arr.length-1]; value = { lower:last.lower, middle:last.middle, upper:last.upper }; }
+      } else {
+        if (notify) alert('Indicator not supported: ' + iname);
+        return false;
+      }
+      // evaluate comparator
+      let matched = false;
+      if (iname === 'bb' && value){
+        if (comp === '<' && value.middle < target) matched = true;
+        if (comp === '>' && value.middle > target) matched = true;
+      } else if (value !== null){
+        if (comp === '<' && value < target) matched = true;
+        if (comp === '>' && value > target) matched = true;
+        if (comp === '<=' && value <= target) matched = true;
+        if (comp === '>=' && value >= target) matched = true;
+      }
+      if (matched){ pushTrigger({rule, type:'indicator', symbol:sym, indicator: iname, value}); if (notify) alert('Indicator rule matched'); return true; }
+      if (notify) alert('Indicator rule not matched.'); return false;
+    }
+  } catch (e){
+    CL('rule eval error: ' + e.message);
+    if (notify) alert('Rule eval error (see console).');
+    return false;
   }
-  return false;
 }
 
-function pushTrigger(obj){ triggers.unshift(obj); if (triggers.length>60) triggers.pop(); renderTriggers(); }
-function renderTriggers(){ const n = $('triggers'); if (!n) return; n.innerHTML = ''; triggers.slice(0,12).forEach(t => { const d = document.createElement('div'); d.style.padding='6px'; d.style.borderBottom='1px solid rgba(255,255,255,0.02)'; d.innerHTML = `<div class="small"><strong>Trigger</strong> • ${t.rule.type} • ${t.time || t.time}</div>`; n.appendChild(d); }); }
-
-/* Propose multi-vision plan (simple template) */
-function proposePlan(trigger){
-  // lightweight templated plan covering visions 1..5
-  const title = `Plan for ${trigger.rule.type} ${trigger.rule.symbolOrKeyword || ''}`;
-  const steps = [
-    'Vision 1 — Dashboard: Pin asset, show recent price action & liquidity.',
-    'Vision 3 — Radar: Run deeper anomaly detection (orderbook, volume spikes).',
-    'Vision 2 — AI Command: Draft a short mission-pack (3 checks: liquidity, audit, news).',
-    'Vision 4 — Human Network: Suggest up to 3 contacts (market makers / funds) to verify risk.',
-    'Vision 5 — Autonomous: Prepare simulated entry ladder and stop-loss, and notify user.'
-  ];
-  alert(`${title}\n\n` + steps.map((s,i)=>`${i+1}. ${s}`).join('\n'));
+/* Push trigger */
+function pushTrigger(obj){
+  obj.ts = new Date().toISOString();
+  triggers.unshift(obj);
+  if (triggers.length > 80) triggers.pop();
+  renderTriggers();
+  // Auto-generate a concise multi-vision plan for the user
+  autoPlanForTrigger(obj);
+}
+function renderTriggers(){
+  const n = $('triggers'); n.innerHTML = '';
+  triggers.slice(0,30).forEach(t=>{
+    const div = document.createElement('div'); div.style.padding='8px'; div.style.borderBottom='1px solid rgba(255,255,255,0.02)';
+    div.innerHTML = `<div style="font-weight:700">${t.rule ? t.rule.type : t.type} • ${t.symbol||t.rule?.subj||''}</div><div class="small muted">${t.ts}</div>`;
+    n.appendChild(div);
+  });
 }
 
-/* ---------- Portfolio import (CSV: symbol,quantity) ---------- */
-$('file-input').addEventListener('change', (ev)=>{
-  // used for research files (AI CC) — not portfolio here
-});
-/* Add convenience: CSV importer for assets (symbol, name, optional price) for non-crypto */
-function importAssetsCSV(file){
-  const reader = new FileReader();
-  reader.onload = (e)=>{
-    const text = e.target.result; const rows = text.split('\n').map(l=>l.trim()).filter(Boolean);
-    rows.forEach(r=>{
-      const parts = r.split(',').map(s=>s.trim());
-      const sym = (parts[0]||'').toLowerCase();
-      if (!sym) return;
-      marketState[sym] = marketState[sym] || { id:null, symbol:sym, name:parts[1]||sym.toUpperCase(), price: parts[2] ? parseFloat(parts[2]) : null, market_cap: null };
-    });
-    renderMarketList();
-    alert('Imported assets from CSV. For live prices/historical you may need a paid equities API.');
-  };
-  reader.readAsText(file);
+/* Auto-plan: convert a trigger into a 5-vision checklist (simple templated) */
+function autoPlanForTrigger(trigger){
+  const rule = trigger.rule;
+  const symbol = trigger.symbol || (rule && rule.subj) || '';
+  let plan = [];
+  plan.push(`Vision 1 — Dashboard: Pin ${symbol.toUpperCase() || ''} and show live orderbook & liquidity (if available).`);
+  plan.push(`Vision 3 — Radar: Run deeper anomaly checks (volume, orderbook, DexS boosts).`);
+  plan.push(`Vision 2 — AI Command: Draft a mission summary (top 3 risks, 3 verification steps, and suggested ladder).`);
+  plan.push(`Vision 4 — Human Network: Suggest 1-3 contacts (market makers, funds, researchers) to verify or provide liquidity context.`);
+  plan.push(`Vision 5 — Autonomous: Prepare a simulated entry plan (ladder, stops) and queue a notification.`);
+  // show as an alert condensed (you asked no auto-exec)
+  alert('AUTOMATED PLAN for trigger:\n\n' + plan.map((s,i)=> `${i+1}. ${s}`).join('\n'));
 }
 
-/* Hook file input for asset CSV import (we also reuse people CSV) */
-const assetCsvInput = document.createElement('input'); assetCsvInput.type='file'; assetCsvInput.accept='.csv'; assetCsvInput.style.display='none';
-document.body.appendChild(assetCsvInput);
-assetCsvInput.addEventListener('change', (ev) => { const f = ev.target.files[0]; if (f) importAssetsCSV(f); });
-
-/* ---------- Inspect helper ---------- */
-function inspectSymbol(sym){
-  const s = marketState[sym.toLowerCase()];
-  if (!s) return alert('No data for ' + sym);
-  const txt = `${s.name} (${s.symbol.toUpperCase()})\nPrice: ${s.price ? '$'+s.price : 'n/a'}\nM.Cap: ${s.market_cap ? '$'+s.market_cap : 'n/a'}\n24h: ${s.change_24h ? s.change_24h.toFixed(2)+'%' : '-'}`;
-  alert(txt);
-}
-
-/* ---------- STARTUP, INTERVALS ---------- */
-$('btn-load-top1000').addEventListener('click', ()=> loadTopCryptos(1000));
-$('btn-refresh-markets').addEventListener('click', ()=> loadTopCryptos(500)); // quick refresh
-$('btn-refresh-dexs').addEventListener('click', ()=> refreshDexS());
-$('btn-refresh-news').addEventListener('click', ()=> fetchNews24h());
-$('btn-load-sample-people').addEventListener('click', ()=> loadSamplePeople());
+/* ---------- UI Bindings for rules add ---------- */
 $('btn-add-rule').addEventListener('click', ()=> {
-  const type = $('rule-type').value;
-  const sym = $('rule-symbol').value.trim();
-  const threshold = parseFloat($('rule-threshold').value || '0');
-  const hours = parseInt($('rule-hours').value || '6');
-  addRule({ type, symbolOrKeyword: sym, threshold, hours, active:true });
-});
-$('btn-scan-anomalies').addEventListener('click', ()=> scanAnomalies());
-
-/* File import hooks */
-$('file-input').addEventListener('change', (ev)=>{
-  // simple local file summarizer placeholder (reads text and shows size)
-  const files = ev.target.files;
-  if (!files || files.length===0) return;
-  const out = [];
-  Array.from(files).forEach(f=>{
-    out.push(`${f.name} • ${Math.round(f.size/1024)} KB`);
-  });
-  $('ai-output').textContent = 'Uploaded files:\n' + out.join('\n') + '\n(Use "Summarize" to run local templated summary)';
-});
-$('btn-summarize').addEventListener('click', ()=> {
-  // local templated summarizer: lists uploaded files and sizes + suggests 3 initial steps
-  const txt = $('ai-output').textContent || '';
-  if (!txt) return alert('Upload files first');
-  const plan = `Mission Summary (local template):\n1) Identify key claims and evidence in uploaded docs.\n2) Cross-check latest news & token prices.\n3) Produce 3 recommended next actions (monitor/hedge/buy).`;
-  $('ai-output').textContent = txt + '\n\n' + plan;
+  const type = $('rule-kind').value;
+  const subj = $('rule-subj').value.trim();
+  const th = $('rule-th').value.trim();
+  const hours = $('rule-hours').value.trim() || 6;
+  if (!subj && type !== 'news') return alert('Set subject (symbol or keyword). For news type use keyword.');
+  addRule({ type, subj, threshold: th, hours });
 });
 
-/* Anomaly scan: primitive heuristics for unusual 24h percent moves > threshold */
-function scanAnomalies(){
-  const arr = Object.values(marketState);
-  const flagged = arr.filter(a => a.change_24h && Math.abs(a.change_24h) >= 15).slice(0,100);
-  $('radar-list').innerHTML = '';
-  if (flagged.length===0) { $('radar-list').innerHTML = '<div class="small">No anomalies found (24h change threshold 15%).</div>'; return; }
-  flagged.forEach(f => {
-    const d = document.createElement('div'); d.style.padding='6px'; d.style.borderBottom='1px solid rgba(255,255,255,0.02)';
-    d.innerHTML = `<div><strong>${f.symbol.toUpperCase()}</strong> <span class="small">${f.name}</span></div><div class="small">24h: ${f.change_24h.toFixed(2)}% • Price: $${fmt(f.price)}</div>`;
-    $('radar-list').appendChild(d);
-  });
-}
+/* ---------- Periodic polling ---------- */
+setInterval(()=> { loadTopCryptos(1); }, POLL_MARKET_MS); // partial refresh (1 page quick)
+setInterval(()=> { fetchNews24h(); }, POLL_NEWS_MS);
+setInterval(async ()=> { for (const r of rules) { try { await evaluateRule(r, false); } catch(e){ CL('eval rule err ' + e.message); } } }, RULE_EVAL_MS);
 
-/* Periodic evaluation: news every 60s, rules every 20s */
-setInterval(()=> fetchNews24h(), 60_000);
-setInterval(async ()=> {
-  for (const r of rules) {
-    try { await evaluateRule(r, false); } catch(e){ console.warn('rule eval err', e); }
-  }
-}, 20_000);
+/* ---------- Buttons ---------- */
+$('btn-refresh-markets').addEventListener('click', ()=> loadTopCryptos(MAX_COIN_PAGES));
+$('btn-refresh-dexs').addEventListener('click', ()=> fetchDexS());
+$('btn-load-people').addEventListener('click', ()=> enrichPeople(PEOPLE_SAMPLE));
+$('btn-run-mission').addEventListener('click', ()=> {
+  const pinnedArr = Array.from(pinned || []);
+  const reply = 'Mission pack (local):\n1) Check pinned assets: ' + (pinnedArr.length? pinnedArr.join(', ') : 'none') + '\n2) Cross-check latest news headlines.\n3) Produce 3 quick next steps (monitor, hedge, buy) — showing now...';
+  $('ai-output').textContent = reply;
+  alert('Mission run: check AI output panel.');
+});
+$('btn-show-triggers').addEventListener('click', ()=> { const t = triggers.map(x=> JSON.stringify(x)).slice(0,6).join('\n\n'); alert('Triggers:\n\n' + (t||'none')); });
 
-/* Initial quick loads */
-loadTopCryptos(250);  // fast start
+/* ---------- Initial loads ---------- */
+loadTopCryptos(1).then(()=> {
+  // after quick load, ask for full 1000 in background
+  loadTopCryptos(MAX_COIN_PAGES);
+});
 fetchNews24h();
-refreshDexS();
+fetchDexS();
 renderRules();
 
-/* ---------- 3D GRAPH (1080p / DPR=1) ---------- */
-/* Minimal but nicer: increased geometry, smoother tubes, CSS labels for nodes */
+/* ---------- 3D Graph: nicer but 1080p / DPR = 1 ---------- */
 (function initGraph(){
+  const container = document.getElementById('graph-container');
+  container.innerHTML = '';
   const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(65, window.innerWidth/window.innerHeight, 0.1, 2000);
-  camera.position.set(0, 18, 130);
-
-  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-  renderer.setPixelRatio(1); // DPR = 1 (1080p target)
+  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
+  camera.position.set(0,18,130);
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setPixelRatio(1);
   renderer.setSize(window.innerWidth, window.innerHeight);
-  document.body.appendChild(renderer.domElement);
+  container.appendChild(renderer.domElement);
 
   const labelRenderer = new THREE.CSS2DRenderer();
   labelRenderer.setSize(window.innerWidth, window.innerHeight);
-  labelRenderer.domElement.style.pointerEvents = 'none';
   labelRenderer.domElement.style.position = 'absolute';
-  labelRenderer.domElement.style.top = '0';
-  document.body.appendChild(labelRenderer.domElement);
+  labelRenderer.domElement.style.top = '0px';
+  labelRenderer.domElement.style.pointerEvents = 'none';
+  container.appendChild(labelRenderer.domElement);
 
   const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true;
-
-  scene.add(new THREE.AmbientLight(0xffffff, 0.7));
-  const dl = new THREE.DirectionalLight(0xffffff, 0.6); dl.position.set(10,20,10); scene.add(dl);
+  controls.enableDamping = true; controls.dampingFactor = 0.08;
+  scene.add(new THREE.AmbientLight(0xffffff,0.7));
+  const d = new THREE.DirectionalLight(0xffffff,0.6); d.position.set(10,30,20); scene.add(d);
 
   const root = new THREE.Group(); scene.add(root);
 
-  // Build nodes: 1) core person "You", 2) modules (5 visions), 3) top few assets initially (we'll add more iteratively)
   const nodes = [];
 
-  function addNode(id, label, color=0x4a90e2, size=1.6, position=new THREE.Vector3()){
-    const g = new THREE.Group();
-    g.position.copy(position);
+  function addNode(id,label,color=0x3fb0ff,size=1.6,position=new THREE.Vector3()){
+    const g = new THREE.Group(); g.position.copy(position);
     const sphere = new THREE.Mesh(new THREE.SphereGeometry(size, 48, 32), new THREE.MeshStandardMaterial({ color, metalness:0.2, roughness:0.4 }));
     sphere.userData = { id, label };
     g.add(sphere);
-    const div = document.createElement('div'); div.className='node-label'; div.textContent = label; div.setAttribute('data-id', id);
-    const labelObj = new THREE.CSS2DObject(div); labelObj.position.set(0, size*1.6, 0); g.add(labelObj);
+    const div = document.createElement('div'); div.className='css-label'; div.textContent = label; div.style.pointerEvents = 'auto';
+    const lab = new THREE.CSS2DObject(div); lab.position.set(0, size*1.6, 0); g.add(lab);
     root.add(g);
-    nodes.push({ id, label, group:g, sphere });
+    nodes.push({ id, group:g, labelObj:div, sphere });
+    // label click centers camera
+    div.addEventListener('click', ()=> { controls.target.copy(g.position); camera.position.copy(g.position.clone().add(new THREE.Vector3(0,6,22))); });
     return g;
   }
 
-  // core user node
+  // central "You" node
   addNode('you','You', 0xff6b4a, 2.6, new THREE.Vector3(0,0,0));
 
-  // the 5 vision modules around
-  const visionLabels = ['Real-Time Dashboard','AI Command Center','Manipulation Radar','Human Network','Autonomous Layer'];
-  for (let i=0;i<visionLabels.length;i++){
-    const ang = i * Math.PI * 2 / visionLabels.length;
-    const pos = new THREE.Vector3(Math.cos(ang)*36, (i%2?1:-1)*4, Math.sin(ang)*36);
-    addNode('vision_'+i, visionLabels[i], 0x3fb0ff, 1.8, pos);
+  // five vision nodes
+  const visionNames = ['Real-Time Dashboard','AI Command Center','Manipulation Radar','Human Network','Autonomous Layer'];
+  for (let i=0;i<visionNames.length;i++){
+    const ang = i * Math.PI * 2 / visionNames.length;
+    const r = 36;
+    const pos = new THREE.Vector3(Math.cos(ang)*r, (i%2?1:-1)*4, Math.sin(ang)*r);
+    addNode('vision_'+i, visionNames[i], 0x3fb0ff, 1.8, pos);
   }
 
-  // function to add asset nodes (spread around)
-  function addAssetNodesBatch(list){
-    const startIdx = nodes.length;
-    list.forEach((a, idx) => {
-      const angle = Math.random() * Math.PI * 2;
-      const r = 48 + Math.random()*28;
-      const pos = new THREE.Vector3(Math.cos(angle)*r, (Math.random()-0.5)*8, Math.sin(angle)*r);
-      addNode('asset_'+a.symbol, (a.symbol||'').toUpperCase(), 0x88c0ff, 1.0, pos);
+  // add top initial asset nodes when marketState loads
+  function addTopAssetNodes(){
+    // pick top 120 by market cap to avoid crowding
+    const list = Object.values(marketState).sort((a,b)=>(b.market_cap||0)-(a.market_cap||0)).slice(0,120);
+    list.forEach((a, idx)=>{
+      const angle = Math.random()*Math.PI*2;
+      const rad = 48 + Math.random()*36;
+      const pos = new THREE.Vector3(Math.cos(angle)*rad, (Math.random()-0.5)*8, Math.sin(angle)*rad);
+      addNode('asset_'+a.symbol, a.symbol.toUpperCase(), 0x88c0ff, 1.0, pos);
     });
   }
+  // expose addAssetNodesBatch for pin actions
+  window._graph = { root, nodes, addAssetNodesBatch: addTopAssetNodes };
 
-  // when marketState updates, refresh an initial set of nodes
-  window.addEventListener('marketUpdate', ()=> {
-    // pick top 120 market caps to avoid overcrowding initial view
-    const list = Object.values(marketState).sort((a,b)=>(b.market_cap||0)-(a.market_cap||0)).slice(0,140);
-    // remove previous asset nodes
-    const toRemove = nodes.filter(n=> n.id && n.id.startsWith('asset_'));
-    toRemove.forEach(n=>{
-      root.remove(n.group);
-      const i = nodes.indexOf(n); if (i>=0) nodes.splice(i,1);
-    });
-    addAssetNodesBatch(list);
-  });
+  // initial attempt to add top nodes (if marketState available)
+  if (Object.keys(marketState).length > 0) addTopAssetNodes();
 
-  // clicking labels centers camera
-  document.body.addEventListener('click', (ev)=>{
-    if (ev.target && ev.target.matches && ev.target.matches('.node-label')){
-      const id = ev.target.getAttribute('data-id');
-      const found = nodes.find(n=> n.id === id);
-      if (found){
-        controls.target.copy(found.group.position);
-        camera.position.copy(found.group.position.clone().add(new THREE.Vector3(0,6,22)));
-      }
-    }
-  });
-
+  // animation loop
   function animate(){
     requestAnimationFrame(animate);
-    root.rotation.y += 0.0006;
+    root.rotation.y += 0.0008;
+    nodes.forEach(n=>{ if (n.group.children[1]) n.group.children[1].rotation.z += 0.001; });
     controls.update();
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera);
   }
   animate();
 
-  // notify initial market load if it already has entries
-  if (Object.keys(marketState).length > 0) window.dispatchEvent(new Event('marketUpdate'));
-
-  // expose nodes for debugging
-  window._graph = { root, nodes, addAssetNodesBatch };
+  // resize handler
+  window.addEventListener('resize', ()=> {
+    camera.aspect = window.innerWidth / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    labelRenderer.setSize(window.innerWidth, window.innerHeight);
+  });
 })();
 
-/* ---------- small UX helpers ---------- */
-/* allow user to import assets CSV via button press elsewhere */
-document.addEventListener('keydown', (e)=> {
-  if (e.ctrlKey && e.key === 'i'){ assetCsvInput.click(); }
-});
-
-/* end of file */
+/* END FILE */
 </script>
 </body>
 </html>
-
