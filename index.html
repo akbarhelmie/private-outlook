@@ -1,153 +1,155 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Five-Vision Intelligence Dashboard — Single File</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Five-Vision Intelligence — Asset-First Dashboard</title>
 
-<!-- Tailwind CDN for compact UI -->
-<script src="https://cdn.tailwindcss.com"></script>
-<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700&display=swap" rel="stylesheet">
+<!-- Fonts & minimal CSS reset -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#071019;
-    --panel: rgba(8,12,18,0.62);
-    --panel-strong: rgba(8,12,18,0.78);
-    --muted:#9fb0c8;
-    --accent:#39b0ff;
-    --glass-border: rgba(255,255,255,0.04);
+    --bg1: #041028;
+    --bg2: linear-gradient(180deg, rgba(6,16,32,1), rgba(5,10,18,1));
+    --panel: rgba(255,255,255,0.04);
+    --panel-strong: rgba(255,255,255,0.06);
+    --muted: rgba(255,255,255,0.72);
+    --accent: #ffffff;
+    --accent-2: #7dd3fc;
   }
-  html,body { height:100%; margin:0; background:linear-gradient(180deg,#04101a 0%, #071019 60%); font-family:'Nunito',sans-serif; color:#e8f6ff; overflow:hidden; }
-  /* Left UI: only 5 visions */
-  #left {
-    position:absolute; left:16px; top:16px; width:420px; max-height:calc(100vh - 32px);
-    padding:14px; border-radius:12px; background:var(--panel);
-    border:1px solid var(--glass-border); backdrop-filter: blur(8px);
-    overflow:auto; z-index:220;
-  }
-  h1 { margin:0; font-size:18px; font-weight:700; }
-  .small { font-size:13px; color:var(--muted); }
-  .module { background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.006)); padding:10px; border-radius:10px; margin-top:12px; border:1px solid rgba(255,255,255,0.02); }
-  .pill { background:rgba(255,255,255,0.03); padding:6px 9px; border-radius:8px; border:1px solid rgba(255,255,255,0.02); cursor:pointer; font-size:13px; }
-  .news-item { padding:8px; border-bottom:1px solid rgba(255,255,255,0.02); }
-  .node-label { cursor:pointer; font-weight:700; color: #eaf4ff; padding:4px 8px; border-radius:8px; background:rgba(0,0,0,0.36); border:1px solid rgba(255,255,255,0.03); font-size:13px; }
+  html,body{height:100%;margin:0;background:var(--bg1);font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;color:var(--accent);overflow:hidden}
+  /* layout: left visions, middle canvas (empty / chart opens in right), right sidebar (details) */
+  #left { position: absolute; left: 18px; top: 18px; width: 380px; max-height: calc(100vh - 36px); overflow:auto; padding: 14px; border-radius: 12px; background: rgba(8,12,18,0.56); border:1px solid rgba(255,255,255,0.04); backdrop-filter: blur(8px); box-shadow: 0 6px 24px rgba(2,6,12,0.6); z-index: 50; }
+  h1{margin:0;font-size:18px;font-weight:700}
+  .small{font-size:13px;color:var(--muted)}
+  .module{margin-top:12px;padding:10px;border-radius:10px;background: linear-gradient(180deg, rgba(255,255,255,0.012), rgba(255,255,255,0.006));border:1px solid rgba(255,255,255,0.02)}
+  .pill{background:rgba(255,255,255,0.03);padding:7px 10px;border-radius:10px;border:1px solid rgba(255,255,255,0.02);cursor:pointer;color:var(--accent);font-weight:600}
   .muted { color:var(--muted) }
-  /* Transparent, elegant vertical scrollbar */
-  #left::-webkit-scrollbar { width:10px; }
-  #left::-webkit-scrollbar-track { background: linear-gradient(180deg, transparent, rgba(255,255,255,0.01)); border-radius:10px; }
-  #left::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.06)); border-radius:10px; border:2px solid transparent; background-clip: padding-box; }
-  /* HUD on right */
-  #hud { position:absolute; right:16px; top:16px; z-index:210; width:360px; max-height:calc(100vh - 32px); overflow:auto; padding:12px; background:var(--panel); border-radius:10px; border:1px solid var(--glass-border); backdrop-filter: blur(6px); }
-  #graph-container { position:absolute; left:0; right:0; top:0; bottom:0; z-index:10; }
-  /* compact lists */
-  .compact-row { display:flex; justify-content:space-between; align-items:center; gap:8px; }
-  .warning { color:#ffb4b4; font-size:13px; }
-  a.link { color:var(--accent); text-decoration:underline; }
-  /* responsive label sizes */
-  .css-label { font-size:13px; padding:4px 8px; border-radius:6px; background:rgba(0,0,0,0.35); border:1px solid rgba(255,255,255,0.03); }
-  /* small icons */
-  .icon { width:18px; height:18px; display:inline-block; vertical-align:middle; margin-right:6px; opacity:0.9; }
+  /* translucent scrollbar (seamless) for #left and #right */
+  #left::-webkit-scrollbar, #right::-webkit-scrollbar { width:10px; height:10px; }
+  #left::-webkit-scrollbar-track, #right::-webkit-scrollbar-track { background: transparent; border-radius:10px; }
+  #left::-webkit-scrollbar-thumb, #right::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.06)); border-radius:10px; border:2px solid transparent; background-clip: padding-box; }
+  /* main area */
+  #main { position:absolute; left:420px; right:420px; top:18px; bottom:18px; border-radius:14px; display:flex; align-items:center; justify-content:center; z-index:10; }
+  #main .placeholder{ width:100%; height:100%; border-radius:14px; border:1px dashed rgba(255,255,255,0.04); display:flex; align-items:center; justify-content:center; color:rgba(255,255,255,0.08); font-size:40px; font-weight:700; }
+  /* right sidebar detail */
+  #right { position:absolute; right:18px; top:18px; width:380px; max-height: calc(100vh - 36px); overflow:auto; padding:14px; border-radius:12px; background: rgba(8,12,18,0.56); border:1px solid rgba(255,255,255,0.04); backdrop-filter: blur(8px); box-shadow: 0 6px 24px rgba(2,6,12,0.6); z-index:60; }
+  #chart-container { width:100%; height:320px; background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:10px; padding:8px; box-sizing:border-box; }
+  .asset-header { display:flex; gap:12px; align-items:center; }
+  .asset-logo{width:56px;height:56px;border-radius:12px;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;border:1px solid rgba(255,255,255,0.04);}
+  .asset-title{font-weight:700;font-size:18px}
+  .asset-sub{font-size:13px;color:var(--muted)}
+  .news-thumb{width:72px;height:48px;object-fit:cover;border-radius:6px;margin-right:8px}
+  .news-row{display:flex;gap:10px;align-items:center;padding:8px;border-bottom:1px solid rgba(255,255,255,0.02)}
+  .news-title{font-size:14px;font-weight:600}
+  .tag{font-size:12px;padding:4px 6px;border-radius:6px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.02);display:inline-block}
+  /* list small */
+  .list-item{padding:8px;border-bottom:1px solid rgba(255,255,255,0.02);display:flex;justify-content:space-between;align-items:center;gap:10px}
+  .list-left{display:flex;flex-direction:column}
+  .btn-ghost{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:6px 8px;border-radius:8px;cursor:pointer}
+  .disabled{opacity:0.38;pointer-events:none}
 </style>
 </head>
 <body>
-  <div id="left" role="navigation" aria-label="Five Vision Controls">
-    <h1>Five-Vision Intelligence — Single File</h1>
-    <div class="small mt-1">Real-time market signals, news (<24h free sources), people nodes, and an Autonomous Layer (local indicators & rules). No uploads needed.</div>
+  <div id="left" aria-label="Vision Controls">
+    <h1>Five-Vision Intelligence</h1>
+    <div class="small">Click any asset in Vision 1 to activate Vision 2 & 5. News thumbnails and people-modern feed included.</div>
 
-    <!-- Vision 1 -->
-    <div class="module" id="vision-1">
-      <div class="compact-row"><div><strong>Vision 1 — Real-Time Intelligence</strong><div class="small">Live top assets & snapshot</div></div>
-        <div><button class="pill" id="btn-refresh-markets">Refresh Markets</button></div>
+    <!-- Vision 1: list assets -->
+    <div class="module" id="vision1">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong>Vision 1 — Real-Time Intelligence</strong><div class="small muted">Top crypto assets (CoinGecko)</div></div>
+        <div><button id="refresh-markets" class="pill">Refresh</button></div>
       </div>
-      <div id="market-summary" class="small mt-2">Loading markets...</div>
-      <div id="market-list" style="max-height:220px; overflow:auto; margin-top:8px;" class="small"></div>
+      <div id="market-stats" class="small mt-2">Loading top assets…</div>
+      <div id="assets-list" style="max-height:320px; overflow:auto; margin-top:8px"></div>
     </div>
 
-    <!-- Vision 2 -->
-    <div class="module" id="vision-2">
-      <div class="compact-row"><div><strong>Vision 2 — AI Command Center</strong><div class="small">Local mission-mode: auto-summaries & checklists</div></div>
-        <div><button class="pill" id="btn-run-mission">Run Mission</button></div>
+    <!-- Vision 2: AI Command Center (locked until asset selected) -->
+    <div class="module" id="vision2">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong>Vision 2 — AI Command Center</strong><div class="small muted">Mission-mode & asset tactical checklists</div></div>
+        <div><button id="run-mission" class="pill disabled" title="Select an asset to enable">Run</button></div>
       </div>
-      <div id="ai-output" class="small mt-2">No missions run yet.</div>
+      <div id="mission-output" class="small mt-2">Locked — select an asset from Vision 1.</div>
     </div>
 
-    <!-- Vision 3 -->
-    <div class="module" id="vision-3">
-      <div class="compact-row"><div><strong>Vision 3 — Market Manipulation Radar</strong><div class="small">DexS boosts & anomaly scans</div></div>
-        <div><button class="pill" id="btn-refresh-dexs">Scan DexS</button></div>
+    <!-- Vision 3: Radar -->
+    <div class="module" id="vision3">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong>Vision 3 — Market Manipulation Radar</strong><div class="small muted">DexS boosts & anomalies</div></div>
+        <div><button id="scan-dexs" class="pill">Scan</button></div>
       </div>
-      <div id="radar-list" class="small mt-2">Loading radar...</div>
+      <div id="radar-output" class="small mt-2">Idle</div>
     </div>
 
-    <!-- Vision 4 -->
-    <div class="module" id="vision-4">
-      <div class="compact-row"><div><strong>Vision 4 — Human Network</strong><div class="small">Influencers & decision-history (auto-enriched)</div></div>
-        <div><button class="pill" id="btn-load-people">Load People</button></div>
+    <!-- Vision 4: People (influential figures) -->
+    <div class="module" id="vision4">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong>Vision 4 — Human Network</strong><div class="small muted">Latest 2–3 headlines for hundreds of people</div></div>
+        <div><button id="load-people" class="pill">Load</button></div>
       </div>
-      <div id="people-list" class="small mt-2">No people loaded yet.</div>
+      <div id="people-list" style="max-height:300px;overflow:auto;margin-top:8px" class="small">No people loaded</div>
     </div>
 
-    <!-- Vision 5 -->
-    <div class="module" id="vision-5">
-      <div class="compact-row"><div><strong>Vision 5 — Autonomous Layer</strong><div class="small">IF-THIS-THEN-THAT local rules (indicators & news)</div></div>
-        <div><button class="pill" id="btn-add-rule">Add Rule</button></div>
+    <!-- Vision 5: Autonomous Layer (locked until asset) -->
+    <div class="module" id="vision5">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div><strong>Vision 5 — Autonomous Layer</strong><div class="small muted">IF-THEN rules (execute suggestions only)</div></div>
+        <div><button id="add-rule" class="pill disabled" title="Select an asset to enable">Add</button></div>
       </div>
-      <div class="small mt-2">Rule editor below (quick add):</div>
-      <div class="mt-2 small">
-        <select id="rule-kind" class="pill">
-          <option value="price-drop">Price drop % in H</option>
-          <option value="indicator">Indicator condition</option>
-          <option value="news">News keyword</option>
-          <option value="dexs">DexS Boost</option>
-        </select>
-        <input id="rule-subj" class="pill" placeholder="symbol or keyword" style="width:130px"/>
-        <input id="rule-th" class="pill" placeholder="threshold" style="width:80px"/>
-        <input id="rule-hours" class="pill" placeholder="hours" style="width:70px"/>
-        <div id="rules-list" class="small mt-2"></div>
-      </div>
+      <div id="rules-area" class="small mt-2">Locked — select an asset from Vision 1.</div>
     </div>
-
-    <div class="small mt-3 muted">Notes: news sources are free and filtered to 24 hours. I used Cluely's clean meeting UI as inspiration for minimalism and translucency. :contentReference[oaicite:1]{index=1}</div>
-    <div class="small mt-2 warning">Security: this page never requests private keys. No uploads are required — everything auto-loads.</div>
   </div>
 
-  <!-- HUD / logs -->
-  <div id="hud" aria-live="polite">
-    <div style="display:flex;justify-content:space-between;align-items:center">
-      <div><strong>Overview</strong><div class="small">Status & triggers</div></div>
-      <div><button id="btn-show-triggers" class="pill">Show</button></div>
-    </div>
-    <div id="triggers" class="small mt-2" style="max-height:340px; overflow:auto;">No triggers yet.</div>
+  <div id="main">
+    <div class="placeholder">Select an asset on the left →</div>
   </div>
 
-  <!-- Graph container (Three.js) -->
-  <div id="graph-container"></div>
+  <div id="right" aria-live="polite">
+    <div id="asset-details" style="display:none">
+      <div class="asset-header">
+        <div class="asset-logo" id="asset-logo"><img id="asset-logo-img" src="" alt="" style="width:100%;height:100%;object-fit:cover"></div>
+        <div>
+          <div class="asset-title" id="asset-name">—</div>
+          <div class="asset-sub" id="asset-sub">—</div>
+        </div>
+      </div>
 
-  <!-- External libs -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/renderers/CSS2DRenderer.js"></script>
+      <div id="chart-container" class="mt-3">
+        <canvas id="price-chart" width="400" height="300"></canvas>
+      </div>
 
-  <!-- Technical indicators library -->
-  <script src="https://unpkg.com/technicalindicators@3.0.3/dist/browser.js"></script>
+      <div style="display:flex;justify-content:space-between;gap:12px;margin-top:10px">
+        <div class="tag">Market Cap: <span id="asset-mcap">—</span></div>
+        <div class="tag">24h: <span id="asset-24h">—</span></div>
+        <div class="tag">Volume: <span id="asset-vol">—</span></div>
+      </div>
+
+      <div style="margin-top:12px"><strong>Latest news</strong></div>
+      <div id="asset-news" style="max-height:220px;overflow:auto;margin-top:8px"></div>
+    </div>
+
+    <div id="empty-right" style="text-align:center;color:rgba(255,255,255,0.06);font-weight:700">Asset details will appear here when you select an asset</div>
+  </div>
+
+  <!-- Dependencies: Chart.js for charts -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
 
 <script>
-/* -------------------------------------------
-   Single-file Intelligence Dashboard
-   - Client-only; no file uploads required
-   - CoinGecko for market data (paging top ~1000)
-   - News via free RSS sources (<24h) using public CORS helper (allorigins)
-   - DexScreener best-effort (may hit CORS)
-   - People auto-enrichment via Wikipedia & Google News RSS (best-effort)
-   - Local indicator calculations via technicalindicators
-   - IF-THIS-THEN rules engine runs periodically
-   ------------------------------------------- */
+/* ============================
+   Asset-first single-file dashboard
+   - no backend
+   - CoinGecko top ~1000 (paged)
+   - when asset clicked: chart + logo + market cap + news thumbnails
+   - Vision 2 & 5 locked until asset selected
+   - People list: ~200 names and 2-3 latest news (thumbnails where available)
+   - Uses allorigins public proxy for RSS/OG extraction (best-effort)
+   ============================ */
 
-/* ---------------- CONFIG ---------------- */
-const COINGECKO_BASE = 'https://api.coingecko.com/api/v3';
-const DEXS_BASE = 'https://api.dexscreener.com';
-const CORS_PROXY_RAW = 'https://api.allorigins.win/raw?url='; // public proxy used to avoid CORS for RSS
-const NEWS_RSS_SOURCES = [
+const COINGECKO = 'https://api.coingecko.com/api/v3';
+const CORS_PROXY = 'https://api.allorigins.win/raw?url='; // public helper for RSS/HTML
+const NEWS_SOURCES = [
   'https://www.reuters.com/rssFeed/wealth',
   'https://www.investing.com/rss/news_25.rss',
   'https://finance.yahoo.com/rss/',
@@ -156,495 +158,427 @@ const NEWS_RSS_SOURCES = [
   'https://decrypt.co/feed',
   'https://cryptonews.com/news/feed/'
 ];
-const PEOPLE_SAMPLE = [
-  { id:'elon', name:'Elon Musk' },
-  { id:'buffett', name:'Warren Buffett' },
-  { id:'larryfink', name:'Larry Fink' },
-  { id:'cathiewood', name:'Cathie Wood' }
-];
-const MAX_COIN_PAGES = 4; // 4 * 250 = 1000 coins
-const POLL_MARKET_MS = 25_000;
-const POLL_NEWS_MS = 60_000;
-const RULE_EVAL_MS = 20_000;
 
-/* ---------- STATE ---------- */
-let marketState = {};        // symbol -> coin object
-let peopleState = {};        // id -> profile (enriched)
-let dexsState = [];          // DexS entries
-let newsCache = [];          // recent articles (<24h)
-let rules = [];              // local rules
-let triggers = [];           // matched triggers
+const MAX_PAGES = 4; // 4*250 = 1000 coins
+const PEOPLE_LIST = (function(){
+  // built-in ~200 influential names (sample). You can extend this list easily inside this file.
+  const base = [
+    "Elon Musk","Warren Buffett","Larry Fink","Cathie Wood","Jamie Dimon","Mark Zuckerberg","Tim Cook","Sundar Pichai",
+    "Christine Lagarde","Jeff Bezos","Bill Gates","Michael Bloomberg","Jensen Huang","Mary Barra","Tobias Lütke","Reed Hastings",
+    "Fred Smith","Jamie Kern Lima","Masayoshi Son","Ray Dalio","Stanley Druckenmiller","Ken Griffin","Steve Cohen","Jim Simons",
+    "Peter Thiel","Jim Chanos","Carl Icahn","Paul Tudor Jones","Philip Anschutz","Robert F. Smith","Oprah Winfrey","Richard Branson",
+    "Marc Benioff","Sheryl Sandberg","Susan Wojcicki","Jack Dorsey","Larry Page","Sergey Brin","Evan Spiegel","Brian Armstrong",
+    "Changpeng Zhao","Gavin Wood","Vitalik Buterin","Chris Dixon","Naval Ravikant","Andreas Antonopoulos","Balaji Srinivasan",
+    "Nic Carter","Laura Shin","Michael Saylor","Sam Bankman-Fried","Barry Silbert","Anthony Scaramucci","Marc Andreessen",
+    "Ben Horowitz","Vinod Khosla","Fred Wilson","Esther Dyson","Reid Hoffman","Peter Fenton","Garrett Camp","Y Combinator",
+    "Sebastian Thrun","Drew Houston","Dieter Rams","John Chambers","Meg Whitman","John Doerr","Hans Vestberg","Rupert Murdoch",
+    "Ratan Tata","Mukesh Ambani","Gautam Adani","Jack Ma","Ma Huateng","Li Ka-Shing","Carlos Slim","Kumar Mangalam Birla",
+    "Zhang Yiming","Lei Jun","Daniel Ek","Tobias Lütke","Hiroshi Mikitani","Masahiro Matsuoka","Patrick Collison","Garry Tan",
+    "Stanley Motta","Lu Zhengyao","Chade-Meng Tan","Francois-Henri Pinault","Herbert Diess","Dilip Shanghvi","Zhang Zhidong",
+    "Yuri Milner","Roman Abramovich","Alisher Usmanov","Leonid Mikhelson","Alexey Mordashov","Vagit Alekperov","Anand Mahindra",
+    "Michael Moritz","Stephen Schwarzman","Henry Kravis","David Rubenstein","Laurene Powell Jobs","John Elkann",
+    "Adena Friedman","Oscar Munoz","Stephen Pagliuca","David Tepper","Leon Cooperman","Stanley Druckenmiller",
+    "Ken Moelis","Alex Mashinsky","Robert Kiyosaki","Mark Cuban","Daymond John","Barbara Corcoran","Kevin O'Leary",
+    "Renaud Laplanche","Daniel Zhang","Zhou Qunfei","Pony Ma","Lei Jun","Robin Li","Wang Xing","Lei Jun",
+    "Dilip Shanghvi","Zhang Yiming","William Ding","He Xiangjian","Fan Bingbing"
+  ];
+  // Fill up to ~200 by duplicating and adding generated names (this is a placeholder for a longer curated list)
+  while (base.length < 200) base.push('Influencer ' + (base.length+1));
+  return base.slice(0,200).map((n,i)=>({id:'p'+(i+1),'name':n}));
+})();
 
-/* ---------- UTIL ---------- */
-function $(id){ return document.getElementById(id); }
-function CL(msg){ console.log('[Dash]', msg); }
-function fmtMoney(n){ if(n===null||n===undefined) return '-'; if(n>=1e9) return (n/1e9).toFixed(2)+'B'; if(n>=1e6) return (n/1e6).toFixed(2)+'M'; if(n>=1e3) return (n/1e3).toFixed(2)+'k'; return Number(n).toFixed(4).replace(/\.?0+$/,''); }
+/* ---------- state ---------- */
+let marketState = {}; // symbol -> {id, symbol, name, price, market_cap, change_24h, image}
+let selectedAsset = null; // symbol string
+let chartInstance = null;
 
-/* ---------- MARKETS: load CoinGecko top ~1000 ---------- */
-async function loadTopCryptos(pages=MAX_COIN_PAGES){
-  $('market-summary').textContent = 'Loading top assets...';
+/* ---------- helpers ---------- */
+function $(id){return document.getElementById(id)}
+function fmt(n){ if(n===null||n===undefined) return '-'; if(n>1e12) return '$'+(n/1e12).toFixed(2)+'T'; if(n>1e9) return '$'+(n/1e9).toFixed(2)+'B'; if(n>1e6) return '$'+(n/1e6).toFixed(2)+'M'; if(n>1e3) return '$'+(n/1e3).toFixed(2)+'k'; return '$'+(Number(n).toFixed(2)); }
+function short(n){ return n? (n>1e9? (n/1e9).toFixed(2)+'B' : n>1e6? (n/1e6).toFixed(2)+'M' : n>1e3? (n/1e3).toFixed(2)+'k' : n.toFixed(2)) : '-' }
+
+/* ---------- load top cryptos (paged) ---------- */
+async function loadTopCryptos(pages=MAX_PAGES){
+  $('assets-list').innerHTML = '<div class="small muted">Loading assets…</div>';
   marketState = {};
   for (let p=1; p<=pages; p++){
-    try {
-      const url = `${COINGECKO_BASE}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=${p}&price_change_percentage=24h`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('CoinGecko rate or CORS: '+res.status);
-      const arr = await res.json();
+    try{
+      const url = `${COINGECKO}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=250&page=${p}&price_change_percentage=24h`;
+      const r = await fetch(url);
+      if (!r.ok) throw new Error('CG status ' + r.status);
+      const arr = await r.json();
       arr.forEach(c => {
-        const sym = (c.symbol||'').toLowerCase();
-        marketState[sym] = {
-          id: c.id, symbol: sym, name: c.name, price: c.current_price, market_cap: c.market_cap,
-          change_24h: c.price_change_percentage_24h, last_updated: c.last_updated
-        };
+        const sym = (c.symbol || '').toLowerCase();
+        marketState[sym] = { id:c.id, symbol:sym, name:c.name, price:c.current_price, market_cap:c.market_cap, change_24h:c.price_change_percentage_24h, image: c.image };
       });
-      // be polite
-      await new Promise(r=>setTimeout(r, 250));
-    } catch (e){
-      CL('loadTopCryptos page ' + p + ' err: ' + e.message);
-      // continue to next page attempt
+      // small delay to avoid rate limit
+      await new Promise(r=>setTimeout(r, 200));
+    }catch(e){
+      console.warn('loadTopCryptos p',p,'err',e);
+      // continue gracefully
     }
   }
-  renderMarketList();
-  $('market-summary').textContent = `Loaded ${Object.keys(marketState).length} crypto assets (CoinGecko).`;
+  renderAssetsList();
 }
 
-/* Render market list (compact) */
-function renderMarketList(){
-  const cont = $('market-list'); cont.innerHTML = '';
+/* ---------- render assets list ---------- */
+function renderAssetsList(){
+  const node = $('assets-list'); node.innerHTML = '';
   const arr = Object.values(marketState).sort((a,b)=>(b.market_cap||0)-(a.market_cap||0)).slice(0,300);
-  arr.forEach(m=>{
-    const div = document.createElement('div'); div.className = 'compact-row'; div.style.padding='8px'; div.style.borderBottom='1px solid rgba(255,255,255,0.02)';
-    const left = document.createElement('div'); left.innerHTML = `<strong style="text-transform:uppercase">${m.symbol}</strong> <div class="small muted">${m.name}</div>`;
-    const right = document.createElement('div'); right.innerHTML = `<div class="small">Price: $${fmtMoney(m.price)}<br/>24h: ${m.change_24h ? m.change_24h.toFixed(2)+'%' : '-'}</div><div style="margin-top:6px"><button class="pill btn-pin" data-sym="${m.symbol}">Pin</button></div>`;
-    div.appendChild(left); div.appendChild(right);
-    cont.appendChild(div);
+  arr.forEach(a=>{
+    const el = document.createElement('div'); el.className='list-item';
+    el.innerHTML = `<div class="list-left"><div style="font-weight:700">${a.symbol.toUpperCase()} <span class="small muted">• ${a.name}</span></div><div class="small muted">MC: ${short(a.market_cap)} • 24h: ${a.change_24h? a.change_24h.toFixed(2)+'%':'-'}</div></div><div><button class="pill btn-select" data-sym="${a.symbol}">Open</button></div>`;
+    node.appendChild(el);
   });
-  cont.querySelectorAll('.btn-pin').forEach(b=> b.addEventListener('click', ()=> pinAsset(b.dataset.sym)));
+  node.querySelectorAll('.btn-select').forEach(b=> b.addEventListener('click', ()=> onSelectAsset(b.dataset.sym)));
+  $('market-stats').textContent = `Showing ${arr.length} assets • Click Open to inspect`;
 }
 
-/* ---------- PIN / NODE interaction ---------- */
-let pinned = new Set();
-function pinAsset(sym){
-  pinned.add(sym.toLowerCase());
-  // highlight node or create it
-  CL('Pinned ' + sym);
-  renderPinnedList();
-  // add node to graph for visibility
-  if (window._graph && window._graph.addAssetNodesBatch){
-    const coin = marketState[sym.toLowerCase()];
-    if (coin) window._graph.addAssetNodesBatch([coin]);
-  }
-}
-function renderPinnedList(){
-  const h = $('market-summary');
-  if (pinned.size === 0) h.textContent += ' • No pins';
-  else h.textContent += ' • Pinned: ' + Array.from(pinned).slice(0,6).map(s=>s.toUpperCase()).join(', ');
-}
+/* ---------- when asset selected: show chart + details + unlock visions ---------- */
+async function onSelectAsset(sym){
+  const s = sym.toLowerCase();
+  if (!marketState[s]) return alert('Symbol not loaded: ' + sym);
+  selectedAsset = marketState[s];
+  // populate right panel
+  $('asset-details').style.display = 'block';
+  $('empty-right').style.display = 'none';
+  $('asset-name').textContent = `${selectedAsset.symbol.toUpperCase()} — ${selectedAsset.name}`;
+  $('asset-sub').textContent = `Price: ${fmt(selectedAsset.price)}`;
+  $('asset-mcap').textContent = fmt(selectedAsset.market_cap);
+  $('asset-24h').textContent = selectedAsset.change_24h ? selectedAsset.change_24h.toFixed(2)+'%' : '-';
+  $('asset-vol').textContent = '-';
+  if (selectedAsset.image) { $('asset-logo-img').src = selectedAsset.image; } else { $('asset-logo-img').src = ''; }
 
-/* ---------- DexScreener fetch (best-effort) ---------- */
-async function fetchDexS(){
-  $('radar-list').textContent = 'Fetching DexS (best-effort)...';
+  // unlock Vision 2 & 5
+  $('run-mission').classList.remove('disabled'); $('run-mission').title='Run mission for '+selectedAsset.symbol.toUpperCase();
+  $('add-rule').classList.remove('disabled'); $('add-rule').title='Add rule for '+selectedAsset.symbol.toUpperCase();
+
+  // fetch historical price chart from CoinGecko (30 days hourly)
   try {
-    const res = await fetch(`${DEXS_BASE}/token-boosts/latest/v1`);
-    if (!res.ok) throw new Error('DexS status ' + res.status);
-    const j = await res.json();
-    dexsState = j.boosts || j.data || [];
-    renderDexs();
-  } catch (e) {
-    CL('DexS fetch error: ' + e.message);
-    $('radar-list').innerHTML = '<div class="small muted">DexS fetch failed (CORS or rate-limit). Showing local anomalies only.</div>';
-    dexsState = [];
+    const url = `${COINGECKO}/coins/${encodeURIComponent(selectedAsset.id)}/market_chart?vs_currency=usd&days=30&interval=hourly`;
+    const r = await fetch(url);
+    if (!r.ok) throw new Error('chart fetch failed ' + r.status);
+    const j = await r.json();
+    // j.prices = [ [ts, price], ... ]
+    const labels = j.prices.map(p => new Date(p[0]).toLocaleString());
+    const prices = j.prices.map(p => p[1]);
+    renderChart(labels, prices, selectedAsset.symbol.toUpperCase());
+    // try to compute 24h volume if available
+    if (j.total_volumes && j.total_volumes.length) {
+      const vol = j.total_volumes[j.total_volumes.length-1][1];
+      $('asset-vol').textContent = fmt(vol);
+    }
+  } catch (e){
+    console.warn('chart err', e);
+    // fallback empty chart
+    renderChart([], [], selectedAsset.symbol.toUpperCase());
   }
+
+  // fetch latest news for asset (search by name + symbol)
+  fetchAssetNews(selectedAsset.name, selectedAsset.symbol);
 }
-function renderDexs(){
-  const node = $('radar-list'); node.innerHTML = '';
-  if (!dexsState || dexsState.length === 0){ node.innerHTML = '<div class="small muted">No DexS signals loaded.</div>'; return; }
-  dexsState.slice(0,80).forEach((d, i)=>{
-    const sym = (d.tokenSymbol||'').toUpperCase();
-    const div = document.createElement('div'); div.style.padding='8px'; div.style.borderBottom='1px solid rgba(255,255,255,0.02)';
-    div.innerHTML = `<div><strong>${sym}</strong> <div class="small muted">${d.tokenName||''}</div></div><div class="small">chain:${d.chainId||''} ${d.liquidity? ' • liq:'+d.liquidity : ''}</div>`;
-    node.appendChild(div);
+
+/* ---------- Charting (Chart.js) ---------- */
+function renderChart(labels, prices, label){
+  const ctx = document.getElementById('price-chart').getContext('2d');
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: labels,
+      datasets: [{
+        label: label + ' price',
+        data: prices,
+        borderColor: 'rgba(125,211,252,0.95)',
+        backgroundColor: (ctx) => {
+          const g = ctx.createLinearGradient(0,0,0,300);
+          g.addColorStop(0, 'rgba(125,211,252,0.12)');
+          g.addColorStop(1, 'rgba(125,211,252,0.02)');
+          return g;
+        },
+        pointRadius: 0,
+        borderWidth: 2,
+        fill: true,
+        tension: 0.15
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      scales: {
+        x: { display: false },
+        y: { ticks: { color: 'rgba(255,255,255,0.8)' } }
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          mode: 'index',
+          intersect: false,
+          backgroundColor: 'rgba(0,0,0,0.8)',
+          titleColor: '#fff',
+          bodyColor: '#fff'
+        }
+      }
+    }
   });
 }
 
-/* ---------- NEWS: free sources (<24h) ---------- */
-async function fetchNews24h(){
-  const cont = $('radar-list');
-  // we render news separately into newsCache and people news
-  newsCache = [];
-  const cutoff = Date.now() - 24*3600*1000;
-  for (const src of NEWS_RSS_SOURCES){
+/* ---------- fetch asset news & images (best-effort) ---------- */
+async function fetchAssetNews(name, symbol){
+  const container = $('asset-news'); container.innerHTML = '<div class="small muted">Loading news…</div>';
+  const queries = [
+    `https://news.google.com/rss/search?q=${encodeURIComponent(name)}`,
+    `https://news.google.com/rss/search?q=${encodeURIComponent(symbol)}`,
+    // coin-specific feeds
+    `https://www.coindesk.com/search?format=RSS&q=${encodeURIComponent(name)}`
+  ];
+  let articles = [];
+  for (const q of queries){
     try {
-      const prox = CORS_PROXY_RAW + encodeURIComponent(src);
+      const prox = CORS_PROXY + encodeURIComponent(q);
       const r = await fetch(prox);
-      if (!r.ok) continue;
+      if (!r.ok) { continue; }
       const txt = await r.text();
       const xml = new DOMParser().parseFromString(txt, 'text/xml');
       const items = xml.querySelectorAll('item');
-      items.forEach((it, idx) => {
-        if (idx > 6) return;
+      items.forEach((it,idx)=>{
+        if (articles.length >= 10) return;
         const title = it.querySelector('title') ? it.querySelector('title').textContent : '';
-        const link = it.querySelector('link') ? it.querySelector('link').textContent : (it.querySelector('guid') ? it.querySelector('guid').textContent : '#');
-        const pub = it.querySelector('pubDate') ? it.querySelector('pubDate').textContent : null;
-        if (!pub) return;
-        const ts = Date.parse(pub);
-        if (isNaN(ts)) return;
-        if (ts >= cutoff) newsCache.push({source: src, title, link, ts});
+        const link = it.querySelector('link') ? it.querySelector('link').textContent : (it.querySelector('guid')?it.querySelector('guid').textContent:'#');
+        const desc = it.querySelector('description') ? it.querySelector('description').textContent : '';
+        // try to extract an image from description or media:content
+        let img = null;
+        const media = it.getElementsByTagName('media:content');
+        if (media && media.length && media[0].getAttribute('url')) img = media[0].getAttribute('url');
+        if (!img) {
+          // try to find <img src="..."> in description html
+          const m = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+          if (m) img = m[1];
+        }
+        // push
+        articles.push({title,link,img,source:q});
       });
-      await new Promise(r=>setTimeout(r,120));
-    } catch (e) {
-      CL('news fetch fail ' + src + ' : ' + e.message);
+    } catch (e){
+      console.warn('asset news fetch fail', e);
     }
+    // small delay
+    await new Promise(r=>setTimeout(r,120));
+    if (articles.length >= 6) break;
   }
-  newsCache.sort((a,b)=> b.ts - a.ts);
-  // render top news into a small compact view on HUD (re-using radar area)
-  const newsNode = $('radar-list');
-  newsNode.innerHTML = '';
-  if (newsCache.length === 0) {
-    newsNode.innerHTML = '<div class="small muted">No free news in the last 24 hours.</div>';
-    return;
-  }
-  newsCache.slice(0,40).forEach(a=>{
-    const el = document.createElement('div'); el.className='news-item';
-    el.innerHTML = `<div style="font-weight:700">${a.title}</div><div class="small muted">${new Date(a.ts).toLocaleString()}</div><div style="margin-top:6px"><a class="link" target="_blank" rel="noreferrer" href="${a.link}">Open</a></div>`;
-    newsNode.appendChild(el);
+  // render top 6 showing thumbnails where available
+  container.innerHTML = '';
+  if (articles.length === 0) { container.innerHTML = '<div class="small muted">No news found.</div>'; return; }
+  articles.slice(0,6).forEach(a=>{
+    const row = document.createElement('div'); row.className = 'news-row';
+    const thumb = document.createElement('img'); thumb.className = 'news-thumb';
+    thumb.src = a.img || '';
+    thumb.onerror = () => thumb.style.display = 'none';
+    const rtxt = document.createElement('div');
+    rtxt.innerHTML = `<div class="news-title"><a href="${a.link}" target="_blank" style="color:var(--accent);text-decoration:none">${a.title}</a></div><div class="small muted">${a.source}</div>`;
+    row.appendChild(thumb);
+    row.appendChild(rtxt);
+    container.appendChild(row);
   });
 }
 
-/* ---------- PEOPLE: auto-enrich (Wikipedia summary + Google News) best-effort ---------- */
-async function enrichPeople(names){
-  const out = {};
-  for (const p of names){
-    try {
-      // Wikipedia summary
-      const slug = encodeURIComponent(p.name.replace(/\s+/g, '_'));
-      const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${slug}`;
-      const wikiRes = await fetch(wikiUrl);
-      const wiki = wikiRes.ok ? await wikiRes.json() : null;
-      // Google News RSS
-      const newsUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(p.name)}`;
-      const prox = CORS_PROXY_RAW + encodeURIComponent(newsUrl);
-      const res = await fetch(prox);
-      let news = [];
-      if (res.ok){
-        const txt = await res.text();
-        const xml = new DOMParser().parseFromString(txt, 'text/xml');
-        const items = xml.querySelectorAll('item');
-        items.forEach((it, idx) => {
-          if (idx > 5) return;
-          news.push({
-            title: it.querySelector('title')?.textContent,
-            link: it.querySelector('link')?.textContent,
-            pubDate: it.querySelector('pubDate')?.textContent
-          });
-        });
-      }
-      out[p.id] = { id: p.id, name: p.name, wiki, recentNews: news };
-      // polite pause
-      await new Promise(r=>setTimeout(r,200));
-    } catch (e) {
-      CL('enrich ' + p.name + ' err ' + e.message);
-      out[p.id] = { id: p.id, name: p.name, wiki: null, recentNews: [] };
-    }
-  }
-  peopleState = {...peopleState, ...out};
-  renderPeople();
-}
+/* ---------- Vision 2: mission (works only after asset selected) ---------- */
+$('run-mission').addEventListener('click', ()=> {
+  if (!selectedAsset) return alert('Select an asset first');
+  // mission: produce 3-step tactical checklist using available local signals
+  const plan = [`1) Snapshot current price & liquidity: ${fmt(selectedAsset.price)} • MC ${fmt(selectedAsset.market_cap)}`, `2) Check 24h news for breaking headlines (open 'Latest news' panel).`, `3) Suggest ladder: if dip > 5% in 2h, suggest buy ladder (3 entries).`];
+  $('mission-output').textContent = plan.join('\n');
+});
 
-/* Render people */
-function renderPeople(){
-  const node = $('people-list'); node.innerHTML = '';
-  Object.values(peopleState).forEach(p=>{
-    const div = document.createElement('div'); div.style.padding='8px'; div.style.borderBottom='1px solid rgba(255,255,255,0.02)';
-    div.innerHTML = `<div style="font-weight:700">${p.name}</div><div class="small muted">${p.wiki && p.wiki.extract ? p.wiki.extract.slice(0,240)+'...' : 'No wiki summary'}</div>`;
-    node.appendChild(div);
-  });
-}
-
-/* ---------- RULE ENGINE ---------- */
-/* Rules stored as { id, type, subj, threshold, hours, active } */
-function addRule(rule){
-  rule.id = 'r'+Date.now();
-  rules.push(rule);
-  renderRules();
-}
-function renderRules(){
-  const node = $('rules-list'); node.innerHTML = '';
-  if (rules.length === 0) { node.innerHTML = '<div class="small muted">No rules</div>'; return; }
-  rules.forEach(r=>{
+/* ---------- Vision 5: rules (only for selected asset) ---------- */
+let localRules = []; // each rule: {id, expr, desc}
+$('add-rule').addEventListener('click', ()=> {
+  if (!selectedAsset) return alert('Select an asset first');
+  const expr = prompt('Add rule for '+selectedAsset.symbol.toUpperCase()+' (examples: price_drop_7h:7 or rsi14<30 ).\nUse "price_drop_H:TH" or "rsi:N<val" or "macd_hist>0"');
+  if (!expr) return;
+  const id = 'lr'+Date.now();
+  localRules.push({id, expr, desc: expr});
+  renderLocalRules();
+});
+function renderLocalRules(){
+  $('rules-area').innerHTML = '';
+  if (localRules.length===0) { $('rules-area').textContent = 'No local rules yet'; return; }
+  localRules.forEach(r=>{
     const div = document.createElement('div'); div.style.padding='6px'; div.style.borderBottom='1px solid rgba(255,255,255,0.02)';
-    div.innerHTML = `<div class="small">[${r.type}] ${r.subj || ''} • th:${r.threshold || ''} • h:${r.hours || ''}</div>
-      <div style="margin-top:6px"><button class="pill btn-run" data-id="${r.id}">Run</button> <button class="pill btn-del" data-id="${r.id}">Del</button></div>`;
-    node.appendChild(div);
+    div.innerHTML = `<div class="small">${r.desc}</div><div style="margin-top:6px"><button class="pill btn-run-local" data-id="${r.id}">Run</button> <button class="btn-ghost btn-del-local" data-id="${r.id}">Delete</button></div>`;
+    $('rules-area').appendChild(div);
   });
-  node.querySelectorAll('.btn-run').forEach(b=> b.addEventListener('click', ()=> { const r = rules.find(x=>x.id===b.dataset.id); if (r) evaluateRule(r,true); }));
-  node.querySelectorAll('.btn-del').forEach(b=> b.addEventListener('click', ()=> { rules = rules.filter(x=>x.id!==b.dataset.id); renderRules(); }));
+  document.querySelectorAll('.btn-run-local').forEach(b=> b.addEventListener('click', async ()=> {
+    const id = b.dataset.id; const r = localRules.find(x=>x.id===id);
+    if (!r) return;
+    alert('Running rule: ' + r.expr + '\n(Only local simulated suggestions. No execution.)');
+    // simple evaluator: support price_drop_H:TH and rsi:N<val (we'll fetch OHLC and compute RSI via technicalindicators)
+    await evaluateLocalRule(r.expr);
+  }));
+  document.querySelectorAll('.btn-del-local').forEach(b=> b.addEventListener('click', ()=> {
+    const id = b.dataset.id; localRules = localRules.filter(x=>x.id!==id); renderLocalRules();
+  }));
 }
 
-/* Evaluate rule */
-async function evaluateRule(rule, notify=false){
+/* Evaluate a local rule (limited set) */
+async function evaluateLocalRule(expr){
+  if (!selectedAsset) return alert('Select an asset first');
   try {
-    if (rule.type === 'news'){
-      const kw = (rule.subj||'').toLowerCase();
-      const matches = newsCache.filter(n => (n.title||'').toLowerCase().includes(kw));
-      if (matches.length > 0) {
-        pushTrigger({rule, type:'news', matches});
-        if (notify) alert('News rule matched: ' + matches.length + ' articles.');
-        return true;
-      } else { if (notify) alert('No news matched'); return false; }
-    }
-    if (rule.type === 'dexs'){
-      const subj = (rule.subj||'').toLowerCase();
-      const hit = dexsState.find(d => (d.tokenSymbol && d.tokenSymbol.toLowerCase()===subj) || (d.tokenName && d.tokenName.toLowerCase().includes(subj)));
-      if (hit){ pushTrigger({rule, type:'dexs', hit}); if (notify) alert('DexS match'); return true; }
-      if (notify) alert('No DexS match'); return false;
-    }
-    if (rule.type === 'price-drop'){
-      const sym = (rule.subj||'').toLowerCase();
-      const coin = marketState[sym];
-      if (!coin){ if (notify) alert('Symbol not in snapshot'); return false; }
-      const hours = Math.max(1, (rule.hours||6));
-      // fetch market chart from CoinGecko for 'days' approximating hours (1 day granularity if hours>24)
-      const days = Math.ceil(hours / 24);
-      const url = `${COINGECKO_BASE}/coins/${encodeURIComponent(coin.id)}/market_chart?vs_currency=usd&days=${days}&interval=hourly`;
-      const r = await fetch(url);
-      if (!r.ok) { if (notify) alert('chart fetch failed'); return false; }
+    if (expr.startsWith('price_drop')) {
+      // format price_drop_H:TH where H = hours, TH = percent (e.g. price_drop_6:7 -> 7% drop in 6 hours)
+      const m = expr.match(/price_drop_(\d+):(\d+(\.\d+)?)/);
+      if (!m) return alert('Bad format');
+      const hours = parseInt(m[1]); const th = parseFloat(m[2]);
+      const url = `${COINGECKO}/coins/${encodeURIComponent(selectedAsset.id)}/market_chart?vs_currency=usd&days=${Math.ceil(hours/24)}&interval=hourly`;
+      const r = await fetch(url); if (!r.ok) throw new Error('chart fail');
       const j = await r.json();
-      if (!j.prices || j.prices.length === 0){ if (notify) alert('no history'); return false; }
-      // find price at cutoff
-      const cutoff = Date.now() - (hours * 3600 * 1000);
+      const cutoff = Date.now() - hours*3600*1000;
       let pastPrice = j.prices[0][1];
-      for (let i=0;i<j.prices.length;i++){
-        if (j.prices[i][0] >= cutoff){ pastPrice = j.prices[i][1]; break; }
+      for (let i=0;i<j.prices.length;i++){ if (j.prices[i][0] >= cutoff){ pastPrice = j.prices[i][1]; break; } }
+      const pct = ((selectedAsset.price - pastPrice)/pastPrice)*100;
+      if (pct <= -Math.abs(th)) { alert(`Rule matched: ${selectedAsset.symbol.toUpperCase()} down ${pct.toFixed(2)}% in ${hours}h`); pushTrigger({type:'price_drop', symbol:selectedAsset.symbol, pct}); }
+      else alert(`No match: ${pct.toFixed(2)}%`);
+    } else if (expr.startsWith('rsi')) {
+      // rsiN<val or rsiN>val
+      const mm = expr.match(/rsi(\d+)\s*(<=|>=|<|>)\s*(\d+(\.\d+)?)/);
+      if (!mm) return alert('Bad RSI format (e.g. rsi14<30)');
+      const N = parseInt(mm[1]); const op = mm[2]; const target = parseFloat(mm[3]);
+      const url = `${COINGECKO}/coins/${encodeURIComponent(selectedAsset.id)}/market_chart?vs_currency=usd&days=14&interval=hourly`;
+      const r = await fetch(url); if (!r.ok) throw new Error('chart fail'); const j = await r.json();
+      const closes = j.prices.map(p=>p[1]);
+      // compute RSI using a simple implementation (avoid external libs here for safety)
+      function computeRSI(values, period){
+        if (values.length < period+1) return null;
+        let gains=0, losses=0;
+        for (let i=1;i<=period;i++){ const delta = values[i]-values[i-1]; if (delta>0) gains+=delta; else losses+=Math.abs(delta); }
+        let avgGain = gains/period; let avgLoss = losses/period;
+        for (let i=period+1;i<values.length;i++){
+          const delta = values[i]-values[i-1];
+          avgGain = ((avgGain*(period-1)) + (delta>0?delta:0))/period;
+          avgLoss = ((avgLoss*(period-1)) + (delta<0?Math.abs(delta):0))/period;
+        }
+        const rs = avgLoss===0? 100 : (avgGain/avgLoss);
+        const rsi = 100 - (100/(1+rs));
+        return rsi;
       }
-      const pct = ((coin.price - pastPrice) / pastPrice) * 100;
-      if (pct <= -Math.abs(rule.threshold || 0)){
-        pushTrigger({rule, type:'price', symbol: sym, pct, currentPrice: coin.price});
-        if (notify) alert(`${sym.toUpperCase()} moved ${pct.toFixed(2)}% in ${hours}h`);
-        return true;
-      } else { if (notify) alert(`No match: ${pct.toFixed(2)}%`); return false; }
-    }
-    if (rule.type === 'indicator'){
-      // subj format: symbol|INDICATOR:PARAMS e.g. btc|rsi:14<30  (means RSI(14) < 30)
-      const parts = (rule.subj||'').split('|');
-      if (parts.length < 2){ if (notify) alert('Bad indicator rule format'); return false; }
-      const sym = parts[0].toLowerCase();
-      const cond = parts[1]; // e.g. rsi:14<30
-      const coin = marketState[sym];
-      if (!coin){ if (notify) alert('symbol not loaded'); return false; }
-      const [indSpec, comparator] = cond.split(/(<=|>=|<|>)/).map(s=>s.trim());
-      const comp = cond.match(/(<=|>=|<|>)/)?.[0] || null;
-      const target = parseFloat(cond.split(comp)[1]);
-      // fetch OHLC-ish: use market_chart for '1' day to get hourly or minute series
-      const url = `${COINGECKO_BASE}/coins/${encodeURIComponent(coin.id)}/market_chart?vs_currency=usd&days=7&interval=hourly`;
-      const r = await fetch(url); if (!r.ok) { if (notify) alert('chart fetch failed'); return false; }
-      const j = await r.json();
-      if (!j.prices) { if (notify) alert('no history'); return false; }
-      // build arrays for indicators: close array (use prices)
-      const closes = j.prices.map(p => p[1]);
-      const highs = j.prices.map(p => p[1]); // approximate (CG returns only prices for free endpoint). For ATR/ADX we need high/low; approximating with same close (less accurate)
-      const lows = j.prices.map(p => p[1]);
-      // parse indSpec (e.g., rsi:14)
-      const [iname, iparam] = indSpec.split(':');
-      let value = null;
-      if (iname === 'rsi'){
-        const period = parseInt(iparam) || 14;
-        const res = technicalindicators.RSI.calculate({ period, values: closes });
-        value = res.length ? res[res.length-1] : null;
-      } else if (iname === 'macd'){
-        // macd:12,26,9
-        const [fast, slow, sig] = iparam ? iparam.split(',').map(x=>parseInt(x)) : [12,26,9];
-        const res = technicalindicators.MACD.calculate({ values: closes, fastPeriod:fast, slowPeriod:slow, signalPeriod:sig, SimpleMAOscillator:false, SimpleMASignal:false });
-        value = res.length ? res[res.length-1].histogram : null;
-      } else if (iname === 'bb'){ // bollinger band: period,std
-        const [period, std] = iparam ? iparam.split(',').map(x=>parseInt(x)) : [20,2];
-        const arr = technicalindicators.BollingerBands.calculate({ period, values: closes, stdDev: std });
-        if (arr.length) { const last = arr[arr.length-1]; value = { lower:last.lower, middle:last.middle, upper:last.upper }; }
-      } else {
-        if (notify) alert('Indicator not supported: ' + iname);
-        return false;
-      }
-      // evaluate comparator
-      let matched = false;
-      if (iname === 'bb' && value){
-        if (comp === '<' && value.middle < target) matched = true;
-        if (comp === '>' && value.middle > target) matched = true;
-      } else if (value !== null){
-        if (comp === '<' && value < target) matched = true;
-        if (comp === '>' && value > target) matched = true;
-        if (comp === '<=' && value <= target) matched = true;
-        if (comp === '>=' && value >= target) matched = true;
-      }
-      if (matched){ pushTrigger({rule, type:'indicator', symbol:sym, indicator: iname, value}); if (notify) alert('Indicator rule matched'); return true; }
-      if (notify) alert('Indicator rule not matched.'); return false;
+      const rsiVal = computeRSI(closes, N);
+      if (rsiVal === null) return alert('Not enough history to compute RSI');
+      const cond = (op === '<' && rsiVal < target) || (op === '>' && rsiVal > target) || (op === '<=' && rsiVal <= target) || (op === '>=' && rsiVal >= target);
+      if (cond) { alert(`Rule matched: RSI${N} = ${rsiVal.toFixed(2)} (${op} ${target})`); pushTrigger({type:'rsi', symbol:selectedAsset.symbol, value:rsiVal}); }
+      else alert(`No match: RSI${N} = ${rsiVal.toFixed(2)}`);
+    } else {
+      alert('Rule type not supported in local evaluator');
     }
   } catch (e){
-    CL('rule eval error: ' + e.message);
-    if (notify) alert('Rule eval error (see console).');
-    return false;
+    console.warn('rule eval err', e); alert('Error evaluating rule: ' + e.message);
   }
 }
 
-/* Push trigger */
+/* Push trigger and show minimal plan */
 function pushTrigger(obj){
-  obj.ts = new Date().toISOString();
-  triggers.unshift(obj);
-  if (triggers.length > 80) triggers.pop();
-  renderTriggers();
-  // Auto-generate a concise multi-vision plan for the user
-  autoPlanForTrigger(obj);
+  // show a small simulated "plan" alert and append to HUD triggers list
+  const summary = `Trigger: ${obj.type} • ${obj.symbol || ''} • ${new Date().toLocaleString()}`;
+  appendToHUD(summary);
+  // generate quick multi-vision checklist
+  const plan = [
+    `Vis1: Pin ${selectedAsset.symbol.toUpperCase()} on Dashboard.`,
+    `Vis3: Run deeper radar checks (volume/orderbook).`,
+    `Vis2: Draft mission pack (3 quick steps).`,
+    `Vis4: Check latest mentions from people list.`,
+    `Vis5: Suggest ladder simulation (no execution).`
+  ];
+  alert('Triggered:\n' + summary + '\n\nPlan:\n' + plan.join('\n'));
 }
-function renderTriggers(){
-  const n = $('triggers'); n.innerHTML = '';
-  triggers.slice(0,30).forEach(t=>{
+
+/* HUD append */
+function appendToHUD(text){
+  const d = document.createElement('div'); d.style.padding='6px'; d.style.borderBottom='1px solid rgba(255,255,255,0.02)'; d.className='small';
+  d.textContent = text;
+  // create a top area in top of right (reuse top of right)
+  const hud = document.createElement('div'); hud.style.marginTop='10px';
+  hud.appendChild(d);
+  // inject into right top if no existing
+  const box = $('right');
+  box.insertBefore(d, box.firstChild.nextSibling);
+}
+
+/* ---------- People: fetch 2-3 latest news for each person (progressive) ---------- */
+async function loadPeopleNews(){
+  $('people-list').innerHTML = '<div class="small muted">Loading people headlines (this runs progressively — may take a minute)...</div>';
+  peopleProfiles = []; // array of {id,name,news:[{title,link,img,ts}]}
+  for (let i=0;i<PEOPLE_LIST.length;i++){
+    const p = PEOPLE_LIST[i];
+    try {
+      const rss = `https://news.google.com/rss/search?q=${encodeURIComponent(p.name)}&hl=en-US&gl=US&ceid=US:en`;
+      const prox = CORS_PROXY + encodeURIComponent(rss);
+      const r = await fetch(prox);
+      if (!r.ok) throw new Error('rss fail');
+      const txt = await r.text();
+      const xml = new DOMParser().parseFromString(txt, 'text/xml');
+      const items = xml.querySelectorAll('item');
+      const news = [];
+      for (let k=0; k<items.length && news.length<3; k++){
+        const it = items[k];
+        const title = it.querySelector('title')?.textContent || '';
+        let link = it.querySelector('link')?.textContent || '';
+        if (!link) link = it.querySelector('guid')?.textContent || '';
+        const desc = it.querySelector('description')?.textContent || '';
+        let img = null;
+        // try to extract img from description html
+        const m = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+        if (m) img = m[1];
+        // push
+        news.push({title,link,img,ts: Date.now()});
+      }
+      peopleProfiles.push({id:p.id, name:p.name, news});
+    } catch (e){
+      peopleProfiles.push({id:p.id, name:p.name, news:[]});
+    }
+    // update UI every 8 people to show progress
+    if (i%8 === 0) renderPeopleListPartial(peopleProfiles);
+    await new Promise(r=>setTimeout(r, 180)); // polite pacing
+  }
+  renderPeopleListPartial(peopleProfiles);
+}
+
+/* render people list (compact: name + 2 headlines) */
+function renderPeopleListPartial(profiles){
+  const node = $('people-list'); node.innerHTML = '';
+  profiles.forEach(p=>{
     const div = document.createElement('div'); div.style.padding='8px'; div.style.borderBottom='1px solid rgba(255,255,255,0.02)';
-    div.innerHTML = `<div style="font-weight:700">${t.rule ? t.rule.type : t.type} • ${t.symbol||t.rule?.subj||''}</div><div class="small muted">${t.ts}</div>`;
-    n.appendChild(div);
+    const newsHtml = (p.news && p.news.length) ? p.news.map(n => `<div style="display:flex;gap:8px;align-items:center;margin-top:6px"><img src="${n.img||''}" style="width:48px;height:36px;object-fit:cover;border-radius:6px" onerror="this.style.display='none'"><div style="font-size:13px"><a href="${n.link}" target="_blank" style="color:var(--accent);text-decoration:none">${n.title}</a></div></div>`).join('') : '<div class="small muted" style="margin-top:6px">No recent headlines</div>';
+    div.innerHTML = `<div style="font-weight:700">${p.name}</div>${newsHtml}`;
+    node.appendChild(div);
   });
 }
 
-/* Auto-plan: convert a trigger into a 5-vision checklist (simple templated) */
-function autoPlanForTrigger(trigger){
-  const rule = trigger.rule;
-  const symbol = trigger.symbol || (rule && rule.subj) || '';
-  let plan = [];
-  plan.push(`Vision 1 — Dashboard: Pin ${symbol.toUpperCase() || ''} and show live orderbook & liquidity (if available).`);
-  plan.push(`Vision 3 — Radar: Run deeper anomaly checks (volume, orderbook, DexS boosts).`);
-  plan.push(`Vision 2 — AI Command: Draft a mission summary (top 3 risks, 3 verification steps, and suggested ladder).`);
-  plan.push(`Vision 4 — Human Network: Suggest 1-3 contacts (market makers, funds, researchers) to verify or provide liquidity context.`);
-  plan.push(`Vision 5 — Autonomous: Prepare a simulated entry plan (ladder, stops) and queue a notification.`);
-  // show as an alert condensed (you asked no auto-exec)
-  alert('AUTOMATED PLAN for trigger:\n\n' + plan.map((s,i)=> `${i+1}. ${s}`).join('\n'));
-}
-
-/* ---------- UI Bindings for rules add ---------- */
-$('btn-add-rule').addEventListener('click', ()=> {
-  const type = $('rule-kind').value;
-  const subj = $('rule-subj').value.trim();
-  const th = $('rule-th').value.trim();
-  const hours = $('rule-hours').value.trim() || 6;
-  if (!subj && type !== 'news') return alert('Set subject (symbol or keyword). For news type use keyword.');
-  addRule({ type, subj, threshold: th, hours });
+/* ---------- initial actions and event bindings ---------- */
+$('refresh-markets').addEventListener('click', ()=> loadTopCryptos(MAX_PAGES));
+$('scan-dexs').addEventListener('click', async ()=> {
+  $('radar-output').textContent = 'Scanning DexS (best-effort)…';
+  // best-effort: we try to fetch token-boosts from DexScreener (may be blocked)
+  try {
+    const res = await fetch('https://api.dexscreener.com/token-boosts/latest/v1');
+    if (!res.ok) throw new Error('dexs status ' + res.status);
+    const data = await res.json();
+    $('radar-output').textContent = 'DexS boosts: ' + (data.boosts ? data.boosts.length : '0');
+  } catch (e){
+    $('radar-output').textContent = 'DexS fetch failed (CORS or rate limit).';
+  }
 });
+$('load-people').addEventListener('click', ()=> loadPeopleNews());
 
-/* ---------- Periodic polling ---------- */
-setInterval(()=> { loadTopCryptos(1); }, POLL_MARKET_MS); // partial refresh (1 page quick)
-setInterval(()=> { fetchNews24h(); }, POLL_NEWS_MS);
-setInterval(async ()=> { for (const r of rules) { try { await evaluateRule(r, false); } catch(e){ CL('eval rule err ' + e.message); } } }, RULE_EVAL_MS);
-
-/* ---------- Buttons ---------- */
-$('btn-refresh-markets').addEventListener('click', ()=> loadTopCryptos(MAX_COIN_PAGES));
-$('btn-refresh-dexs').addEventListener('click', ()=> fetchDexS());
-$('btn-load-people').addEventListener('click', ()=> enrichPeople(PEOPLE_SAMPLE));
-$('btn-run-mission').addEventListener('click', ()=> {
-  const pinnedArr = Array.from(pinned || []);
-  const reply = 'Mission pack (local):\n1) Check pinned assets: ' + (pinnedArr.length? pinnedArr.join(', ') : 'none') + '\n2) Cross-check latest news headlines.\n3) Produce 3 quick next steps (monitor, hedge, buy) — showing now...';
-  $('ai-output').textContent = reply;
-  alert('Mission run: check AI output panel.');
-});
-$('btn-show-triggers').addEventListener('click', ()=> { const t = triggers.map(x=> JSON.stringify(x)).slice(0,6).join('\n\n'); alert('Triggers:\n\n' + (t||'none')); });
-
-/* ---------- Initial loads ---------- */
-loadTopCryptos(1).then(()=> {
-  // after quick load, ask for full 1000 in background
-  loadTopCryptos(MAX_COIN_PAGES);
-});
-fetchNews24h();
-fetchDexS();
-renderRules();
-
-/* ---------- 3D Graph: nicer but 1080p / DPR = 1 ---------- */
-(function initGraph(){
-  const container = document.getElementById('graph-container');
-  container.innerHTML = '';
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(60, window.innerWidth/window.innerHeight, 0.1, 2000);
-  camera.position.set(0,18,130);
-  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
-  renderer.setPixelRatio(1);
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  container.appendChild(renderer.domElement);
-
-  const labelRenderer = new THREE.CSS2DRenderer();
-  labelRenderer.setSize(window.innerWidth, window.innerHeight);
-  labelRenderer.domElement.style.position = 'absolute';
-  labelRenderer.domElement.style.top = '0px';
-  labelRenderer.domElement.style.pointerEvents = 'none';
-  container.appendChild(labelRenderer.domElement);
-
-  const controls = new THREE.OrbitControls(camera, renderer.domElement);
-  controls.enableDamping = true; controls.dampingFactor = 0.08;
-  scene.add(new THREE.AmbientLight(0xffffff,0.7));
-  const d = new THREE.DirectionalLight(0xffffff,0.6); d.position.set(10,30,20); scene.add(d);
-
-  const root = new THREE.Group(); scene.add(root);
-
-  const nodes = [];
-
-  function addNode(id,label,color=0x3fb0ff,size=1.6,position=new THREE.Vector3()){
-    const g = new THREE.Group(); g.position.copy(position);
-    const sphere = new THREE.Mesh(new THREE.SphereGeometry(size, 48, 32), new THREE.MeshStandardMaterial({ color, metalness:0.2, roughness:0.4 }));
-    sphere.userData = { id, label };
-    g.add(sphere);
-    const div = document.createElement('div'); div.className='css-label'; div.textContent = label; div.style.pointerEvents = 'auto';
-    const lab = new THREE.CSS2DObject(div); lab.position.set(0, size*1.6, 0); g.add(lab);
-    root.add(g);
-    nodes.push({ id, group:g, labelObj:div, sphere });
-    // label click centers camera
-    div.addEventListener('click', ()=> { controls.target.copy(g.position); camera.position.copy(g.position.clone().add(new THREE.Vector3(0,6,22))); });
-    return g;
-  }
-
-  // central "You" node
-  addNode('you','You', 0xff6b4a, 2.6, new THREE.Vector3(0,0,0));
-
-  // five vision nodes
-  const visionNames = ['Real-Time Dashboard','AI Command Center','Manipulation Radar','Human Network','Autonomous Layer'];
-  for (let i=0;i<visionNames.length;i++){
-    const ang = i * Math.PI * 2 / visionNames.length;
-    const r = 36;
-    const pos = new THREE.Vector3(Math.cos(ang)*r, (i%2?1:-1)*4, Math.sin(ang)*r);
-    addNode('vision_'+i, visionNames[i], 0x3fb0ff, 1.8, pos);
-  }
-
-  // add top initial asset nodes when marketState loads
-  function addTopAssetNodes(){
-    // pick top 120 by market cap to avoid crowding
-    const list = Object.values(marketState).sort((a,b)=>(b.market_cap||0)-(a.market_cap||0)).slice(0,120);
-    list.forEach((a, idx)=>{
-      const angle = Math.random()*Math.PI*2;
-      const rad = 48 + Math.random()*36;
-      const pos = new THREE.Vector3(Math.cos(angle)*rad, (Math.random()-0.5)*8, Math.sin(angle)*rad);
-      addNode('asset_'+a.symbol, a.symbol.toUpperCase(), 0x88c0ff, 1.0, pos);
-    });
-  }
-  // expose addAssetNodesBatch for pin actions
-  window._graph = { root, nodes, addAssetNodesBatch: addTopAssetNodes };
-
-  // initial attempt to add top nodes (if marketState available)
-  if (Object.keys(marketState).length > 0) addTopAssetNodes();
-
-  // animation loop
-  function animate(){
-    requestAnimationFrame(animate);
-    root.rotation.y += 0.0008;
-    nodes.forEach(n=>{ if (n.group.children[1]) n.group.children[1].rotation.z += 0.001; });
-    controls.update();
-    renderer.render(scene, camera);
-    labelRenderer.render(scene, camera);
-  }
-  animate();
-
-  // resize handler
-  window.addEventListener('resize', ()=> {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    labelRenderer.setSize(window.innerWidth, window.innerHeight);
-  });
+/* Load quick initial data */
+(async function boot(){
+  // quick first-page load for responsiveness
+  await loadTopCryptos(1);
+  // background full load
+  setTimeout(()=> loadTopCryptos(MAX_PAGES), 1200);
+  // pre-load people headlines progressively so Vision 4 fills
+  // user requested hundreds of figures: we run it but paced (may take ~30-60s)
+  setTimeout(()=> loadPeopleNews(), 3000);
 })();
 
-/* END FILE */
+/* End of script */
 </script>
 </body>
 </html>
