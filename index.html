@@ -1,95 +1,151 @@
 <!doctype html>
+<!--
+  Five-Vision Intelligence - Single File Dashboard
+  - Author: GPT-5 Thinking mini (assistant)
+  - Purpose: Single-file, client-only intelligence dashboard implementing:
+      Vision 1: Real-Time Intelligence (Top 100 crypto list)
+      Vision 2: AI Command Center (mission synth)
+      Vision 3: Shadow Archive (searchable)
+      Vision 4: Market Radar (anomaly detection)
+      Vision 5: Human Network (200 people always visible)
+  - Features:
+      * Candlestick chart (TradingView Lightweight Charts) with EMA9/EMA21/EMA50, Bollinger Bands, ATR, RSI (subpanel), MACD (subpanel)
+      * Progressive loading for 200 people and their latest 3 headlines (<24h)
+      * Robust fetch -> fallback to proxy(s) (allorigins + codetabs)
+      * Local archive and rule engine (IF-THEN simulator)
+      * Soft cloudy UI (no blinding white), transparent scrollbars
+      * No backend, no auto-trading (simulation only)
+  - Important: First load progressive; give 30-90s to populate all news/people.
+-->
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Five-Vision Intelligence — Fixed (Charts / News / Visions)</title>
+<title>Five-Vision Intelligence — Single File</title>
+
+<!-- Fonts -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+<!-- CDN Libraries -->
+<!-- Lightweight Charts (better rendering, less canvas-reuse headaches) -->
+<script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
+<!-- technicalindicators for EMA/RSI/MACD/BB/ATR calculations -->
+<script src="https://unpkg.com/technicalindicators@3.0.3/dist/browser.js"></script>
+
 <style>
-:root{
-  --bg1:#eef4f8;
-  --bg2:#f7fbfd;
-  --panel:#ffffffcc;
-  --muted:#546070;
-  --ink:#0b1220;
-  --accent:#0ea5e9;
-  --glass-border: rgba(11,17,25,0.04);
-  --card-shadow: 0 10px 30px rgba(12,18,32,0.06);
-}
-html,body{height:100%;margin:0;background:linear-gradient(120deg,var(--bg1),var(--bg2));font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:var(--ink);overflow:hidden}
-@keyframes slow-cloud { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
-body::before{ content:""; position:fixed; inset:0; pointer-events:none; background:linear-gradient(120deg, rgba(255,255,255,0.3), rgba(240,248,255,0.2)); filter:blur(40px) saturate(100%); opacity:0.85; animation:slow-cloud 28s linear infinite; mix-blend-mode:soft-light }
-#left{position:absolute;left:18px;top:18px;width:380px;bottom:18px;padding:16px;border-radius:12px;background:var(--panel);border:1px solid var(--glass-border);box-shadow:var(--card-shadow);overflow:auto}
-#center{position:absolute;left:420px;right:460px;top:18px;bottom:18px;border-radius:14px;background:transparent;display:flex;flex-direction:column;overflow:hidden}
-#right{position:absolute;right:18px;top:18px;width:420px;bottom:18px;padding:16px;border-radius:12px;background:var(--panel);border:1px solid var(--glass-border);box-shadow:var(--card-shadow);overflow:auto}
-h1{margin:0;font-weight:800;font-size:18px}
-.small{font-size:13px;color:var(--muted)}
-.module{margin-top:12px;padding:10px;border-radius:10px;background:transparent;border:1px solid rgba(11,17,25,0.02)}
-.pill{background:transparent;padding:8px 10px;border-radius:10px;border:1px solid rgba(11,17,25,0.04);cursor:pointer;font-weight:700;color:var(--ink)}
-*::-webkit-scrollbar{width:10px;height:10px}*::-webkit-scrollbar-track{background:transparent}*::-webkit-scrollbar-thumb{background:transparent;border-radius:10px}
-*:hover::-webkit-scrollbar-thumb{background:rgba(11,17,25,0.06)}
-.asset-row{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:10px;margin-bottom:8px;transition:all 140ms ease}
-.asset-row:hover{background:rgba(14,165,233,0.03);cursor:pointer}
-.asset-left{display:flex;align-items:center;gap:12px}
-.asset-logo{width:44px;height:44px;border-radius:9px;background:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid rgba(11,17,25,0.03)}
-.asset-meta{display:flex;flex-direction:column}
-.asset-name{font-weight:700}
-.asset-sub{font-size:12px;color:var(--muted)}
-#chartHeader{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(11,17,25,0.02)}
-#chartArea{flex:1;padding:12px;display:flex;flex-direction:column;gap:8px}
-#chartBox{flex:1;border-radius:12px;background:linear-gradient(180deg,#ffffff,#fbfdff);border:1px solid rgba(11,17,25,0.02);display:flex;flex-direction:column;overflow:hidden;position:relative}
-.chart-canvas{width:100%;height:100%;display:block}
-.indicator-panel{height:120px;border-top:1px solid rgba(11,17,25,0.02);display:flex;gap:8px;padding:8px;align-items:center}
-.floating-news{display:flex;gap:12px;align-items:center;padding:10px;border-radius:12px;margin-bottom:10px;background:#fff;border:1px solid rgba(11,17,25,0.02)}
-.news-thumb{width:120px;height:70px;border-radius:8px;object-fit:cover}
-.person-card{display:flex;gap:12px;padding:10px;border-radius:12px;margin-bottom:10px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid rgba(11,17,25,0.02)}
-.person-thumb{width:64px;height:64px;border-radius:10px;overflow:hidden;background:#eef2f6;display:flex;align-items:center;justify-content:center}
-.callout{position:absolute;left:24px;top:24px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
-.callout-item{background:linear-gradient(180deg,#ffffff,#f1fbff);padding:8px 10px;border-radius:10px;border:1px solid rgba(11,17,25,0.04);box-shadow:0 8px 30px rgba(12,18,32,0.06);font-weight:700;color:var(--ink)}
-#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:10000;background:var(--ink);color:#fff;padding:10px 14px;border-radius:10px;display:none}
+  :root{
+    --bgA:#eef6fb;
+    --bgB:#f6fbff;
+    --panel:#ffffffee;
+    --muted:#6b7280;
+    --ink:#071127;
+    --accent:#0ea5e9;
+    --glass-border: rgba(7,17,34,0.06);
+    --card-shadow: 0 10px 30px rgba(7,15,25,0.06);
+  }
+  html,body{height:100%;margin:0;background:linear-gradient(160deg,var(--bgA),var(--bgB));font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:var(--ink);overflow:hidden}
+  /* animated soft clouds layer */
+  body::before{ content:""; position:fixed; inset:0; pointer-events:none; background: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.45), transparent 12%), radial-gradient(circle at 80% 80%, rgba(240,248,255,0.35), transparent 18%); filter: blur(30px) saturate(110%); opacity:0.95; animation: drift 36s linear infinite; mix-blend-mode:overlay; }
+  @keyframes drift { 0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)} }
+
+  /* Layout */
+  #left { position:absolute; left:18px; top:18px; width:420px; bottom:18px; padding:18px; border-radius:14px; background:var(--panel); border:1px solid var(--glass-border); box-shadow:var(--card-shadow); overflow:auto; }
+  #center { position:absolute; left:460px; right:540px; top:18px; bottom:18px; border-radius:14px; background:transparent; display:flex; flex-direction:column; overflow:hidden; }
+  #right { position:absolute; right:18px; top:18px; width:520px; bottom:18px; padding:18px; border-radius:14px; background:var(--panel); border:1px solid var(--glass-border); box-shadow:var(--card-shadow); overflow:auto; }
+
+  h1{margin:0;font-weight:800;font-size:18px}
+  .small{font-size:13px;color:var(--muted)}
+  .module{margin-top:12px;padding:10px;border-radius:12px;background:transparent;border:1px solid rgba(7,17,34,0.02)}
+  .pill{background:transparent;padding:8px 10px;border-radius:10px;border:1px solid rgba(7,17,34,0.05);cursor:pointer;font-weight:700;color:var(--ink)}
+  .muted-ink{color:var(--muted)}
+
+  /* scrollbar style: invisible until hover */
+  *::-webkit-scrollbar{width:10px;height:10px}
+  *::-webkit-scrollbar-track{background:transparent}
+  *::-webkit-scrollbar-thumb{background:transparent;border-radius:10px;border:2px solid transparent}
+  *:hover::-webkit-scrollbar-thumb{background:rgba(7,17,34,0.05)}
+
+  /* assets list */
+  .asset-row{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;margin-bottom:8px;transition:all 130ms ease}
+  .asset-row:hover{background:rgba(14,165,233,0.03);cursor:pointer}
+  .asset-left{display:flex;align-items:center;gap:12px}
+  .asset-logo{width:44px;height:44px;border-radius:10px;background:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid rgba(7,17,34,0.03)}
+  .asset-meta{display:flex;flex-direction:column}
+  .asset-name{font-weight:700}
+  .asset-sub{font-size:12px;color:var(--muted)}
+
+  /* center chart area */
+  #chartHeader{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(7,17,34,0.02)}
+  #chartArea{flex:1;padding:12px;display:flex;flex-direction:column;gap:8px}
+  #chartBox{flex:1;border-radius:12px;background:linear-gradient(180deg,#ffffff,#fbfdff);border:1px solid rgba(7,17,34,0.02);display:flex;flex-direction:column;overflow:hidden;position:relative}
+
+  /* canvas container used by Lightweight charts */
+  #tvChart{ width:100%; height:58%; background:transparent; }
+  #indicatorsPanel{ height:42%; display:flex; gap:8px; padding:8px; flex-direction:row; }
+
+  .indicatorBox{ flex:1; border-radius:10px; background:#fff; border:1px solid rgba(7,17,34,0.02); padding:8px; box-shadow:var(--card-shadow); overflow:hidden }
+
+  /* callouts */
+  .callouts{ position:absolute; left:26px; top:28px; z-index:20; display:flex; flex-direction:column; gap:8px; pointer-events:none }
+  .callout{ background:linear-gradient(180deg,#ffffff,#f4fbff); padding:8px 12px; border-radius:10px; border:1px solid rgba(7,17,34,0.04); box-shadow:0 10px 24px rgba(7,15,25,0.06); font-weight:700 }
+
+  /* right panels (news & people) */
+  .floating-news{ display:flex; gap:12px; align-items:center; padding:10px; border-radius:12px; margin-bottom:10px; background:#fff; border:1px solid rgba(7,17,34,0.02) }
+  .news-thumb{ width:120px; height:70px; border-radius:8px; object-fit:cover }
+  .person-card{ display:flex; gap:12px; padding:10px; border-radius:12px; margin-bottom:10px; background:linear-gradient(180deg,#fff,#fbfdff); border:1px solid rgba(7,17,34,0.02) }
+  .person-thumb{ width:64px; height:64px; border-radius:12px; overflow:hidden; background:#eef6fb; display:flex; align-items:center; justify-content:center }
+
+  #toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:22px; z-index:9999; background:var(--ink); color:#fff; padding:10px 14px; border-radius:10px; display:none }
+  .badge{font-size:12px;padding:6px 8px;border-radius:8px;background:rgba(7,17,34,0.03)}
 </style>
 </head>
 <body>
+  <!-- LEFT: Vision 1 + action panels -->
   <div id="left">
     <h1>Five-Vision Intelligence</h1>
-    <div class="small">Soft-cloud UI • top 100 crypto • 200 people (no bios) • real-time-ish (public proxies)</div>
+    <div class="small muted-ink">Realtime client-only dashboard — Top 100 crypto, 200 influencers, layered indicators, news, archive & rule engine</div>
 
+    <!-- Vision 1: Market list -->
     <div class="module">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 1 — Real-Time Intelligence</strong><div class="small">Top 100 • click to inspect</div></div>
+        <div><strong>Vision 1 — Real-Time Intelligence</strong><div class="small">Top 100 (CoinGecko)</div></div>
         <div><button id="btnRefresh" class="pill">Refresh</button></div>
       </div>
       <div id="marketStatus" class="small" style="margin-top:8px">Loading top 100…</div>
-      <div id="assetsList" style="margin-top:10px;max-height:420px;overflow:auto"></div>
+      <div id="assetsList" style="margin-top:10px; max-height:420px; overflow:auto"></div>
     </div>
 
+    <!-- Vision 2: AI Command Center -->
     <div class="module">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 2 — AI Command Center</strong><div class="small">Mission mode (select asset/person)</div></div>
-        <div><button id="btnRunMission" class="pill" disabled>Run</button></div>
+        <div><strong>Vision 2 — AI Command Center</strong><div class="small">Mission mode synthesizes a step-by-step plan</div></div>
+        <div><button id="btnRunMission" class="pill" disabled>Run Mission</button></div>
       </div>
-      <div id="aiPanel" class="small" style="margin-top:8px">Locked — select an asset or person</div>
+      <div id="aiPanel" class="small" style="margin-top:8px">Locked — select an asset or influencer</div>
     </div>
 
+    <!-- Vision 3: Shadow Archive -->
     <div class="module">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 3 — Shadow Archive</strong><div class="small">Search signals & missions</div></div>
+        <div><strong>Vision 3 — Shadow Archive</strong><div class="small">Search triggered signals, missions, rule history</div></div>
         <div><button id="btnOpenArchive" class="pill">Open</button></div>
       </div>
       <div id="archivePanel" class="small" style="margin-top:8px">No entries yet</div>
     </div>
 
+    <!-- Vision 4: Market Radar -->
     <div class="module">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 4 — Market Radar</strong><div class="small">Anomalies & DexS hints</div></div>
-        <div><button id="btnScanRadar" class="pill">Scan</button></div>
+        <div><strong>Vision 4 — Market Radar</strong><div class="small">Anomaly scanner</div></div>
+        <div><button id="btnScanRadar" class="pill">Scan Radar</button></div>
       </div>
       <div id="radarPanel" class="small" style="margin-top:8px">Idle</div>
     </div>
 
+    <!-- Vision 5 quick preview -->
     <div class="module">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 5 — Human Network</strong><div class="small">200 people — click to surface</div></div>
+        <div><strong>Vision 5 — Human Network</strong><div class="small">200 influencers — always visible on right</div></div>
         <div><button id="btnLoadPeople" class="pill">Load People</button></div>
       </div>
       <div id="peoplePreview" class="small" style="margin-top:8px">People not loaded</div>
@@ -99,282 +155,293 @@ h1{margin:0;font-weight:800;font-size:18px}
     <div style="margin-top:6px"><button id="btnCheckWallet" class="pill">Check Wallet</button></div>
   </div>
 
+  <!-- CENTER: Chart + indicators -->
   <div id="center">
     <div id="chartHeader">
-      <div>
-        <div id="chartTitle" style="font-weight:800">No asset selected</div>
-        <div id="chartSubtitle" class="small">Click a coin to load candles, indicators and DITIMPA callouts</div>
-      </div>
+      <div><div id="chartTitle" style="font-weight:800">Select an asset</div><div id="chartSubtitle" class="small">Price / indicators / callouts</div></div>
       <div style="display:flex;gap:8px;align-items:center">
-        <select id="tfSelect" class="pill"><option value="1">1D</option><option value="7">7D</option><option value="30" selected>30D</option></select>
+        <select id="tfSelector" class="pill"><option value="1">1D</option><option value="7">7D</option><option value="30" selected>30D</option></select>
         <select id="chartMode" class="pill"><option value="candles" selected>Candles</option><option value="line">Line</option></select>
-        <button id="btnToggleIndicators" class="pill">Toggle Indicators</button>
+        <button id="btnToggleInd" class="pill">Toggle Indicators</button>
       </div>
     </div>
 
     <div id="chartArea">
       <div id="chartBox">
-        <div id="callouts" class="callout"></div>
-        <!-- main canvas (single id used consistently) -->
-        <canvas id="canvasMain" class="chart-canvas"></canvas>
-        <!-- RSI -->
-        <div id="rsiPanel" class="indicator-panel"><canvas id="canvasRsi" style="width:100%;height:100%"></canvas></div>
-        <!-- MACD -->
-        <div id="macdPanel" class="indicator-panel"><canvas id="canvasMacd" style="width:100%;height:100%"></canvas></div>
+        <div class="callouts" id="calloutContainer"></div>
+        <div id="tvChart"></div>
+        <div id="indicatorsPanel">
+          <div class="indicatorBox"><div style="font-weight:800">RSI (14)</div><div id="rsiChartContainer" style="height:calc(100% - 28px)"></div></div>
+          <div class="indicatorBox"><div style="font-weight:800">MACD (12,26,9)</div><div id="macdChartContainer" style="height:calc(100% - 28px)"></div></div>
+        </div>
       </div>
     </div>
   </div>
 
+  <!-- RIGHT: asset detail, news, 200 people -->
   <div id="right">
     <div id="assetDetail" style="display:none">
       <div style="display:flex;gap:12px;align-items:center">
-        <div style="width:96px;height:96px;border-radius:12px;overflow:hidden;background:#f3f5f7"><img id="assetLogo" src="" style="width:100%;height:100%;object-fit:cover"></div>
+        <div style="width:96px;height:96px;border-radius:12px;overflow:hidden;background:#eef8ff"><img id="assetLogo" src="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>
         <div><div id="assetName" style="font-weight:800;font-size:18px">—</div><div id="assetMeta" class="small">—</div></div>
       </div>
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
         <div class="pill" id="detailPrice">Price: —</div>
-        <div class="pill" id="detailMcap">Market Cap: —</div>
+        <div class="pill" id="detailMcap">Mcap: —</div>
         <div class="pill" id="detail24h">24h: —</div>
       </div>
-      <div style="margin-top:12px"><strong>Latest News (24h)</strong></div>
-      <div id="newsList" style="margin-top:8px;max-height:420px;overflow:auto"></div>
+      <div style="margin-top:12px"><strong>Latest News (24h — up to 3)</strong></div>
+      <div id="newsList" style="margin-top:8px;max-height:220px;overflow:auto"></div>
     </div>
 
-    <div id="peopleFull" style="margin-top:8px">
-      <div style="font-weight:800">People (200)</div>
-      <div id="peopleScroll" style="margin-top:8px;max-height:700px;overflow:auto"></div>
-    </div>
+    <div style="margin-top:12px;margin-bottom:8px"><strong>People (200) — always visible</strong></div>
+    <div id="peopleScroll" style="max-height:78vh; overflow:auto"></div>
   </div>
 
   <div id="toast"></div>
 
-  <!-- libs -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@3.3.0/dist/chartjs-chart-financial.min.js"></script>
-  <script src="https://unpkg.com/technicalindicators@3.0.3/dist/browser.js"></script>
-
 <script>
-/* ---------- Robust single-file dashboard fixes ----------
-   - Ensures Chart destruction before reuse
-   - Robust RSS / news fetching with proxy fallback (allorigins)
-   - Vision 2-5 implemented functionally (not placeholders)
-   - Progressive people enrichment and clickable surface into AI panel
-   - DITIMPA callouts placed and archived
-   ------------------------------------------------------- */
+/* =========================================================================
+   Big single-file implementation
+   - Use TradingView Lightweight Charts for main chart rendering
+   - Use technicalindicators for calculations
+   - Many defensive fetch/pacing strategies
+   - Progressive loading of 200 people and their news
+   - Archive, rules, mission generation (client-only)
+   ========================================================================= */
 
+/* ---------- Configuration & State ---------- */
 const COINGECKO = 'https://api.coingecko.com/api/v3';
-const PROXY = 'https://api.allorigins.win/raw?url='; // primary public proxy
-const ALT_PROXY = 'https://api.codetabs.com/v1/proxy?quest='; // alt fallback (best-effort)
+const PROXY = 'https://api.allorigins.win/raw?url='; // primary public proxy fallback
+const ALT_PROXY = 'https://api.codetabs.com/v1/proxy?quest='; // alt fallback
 const MAX_COINS = 100;
 const PEOPLE_COUNT = 200;
 const SOLANA_WALLET = document.getElementById('solAddr').textContent.trim();
+const POLITE_MS = 140; // pacing between external requests
 
+// internal state
 let coins = [], coinMap = {};
 let selected = null;
-let people = [];
-let archive = [];
-let rules = [];
-let mainChart = null, rsiChart = null, macdChart = null;
+let tvChart = null;           // Lightweight chart instance
+let candleSeries = null;      // candlestick series
+let emaSeries = null;
+let ema21Series = null;
+let ema50Series = null;
+let bbUpperSeries = null;
+let bbLowerSeries = null;
+let people = [];              // array of 200 people
+let archive = [];             // local archive entries
+let rules = [];               // local IF-THEN rules (simulated)
 
-/* helpers */
+/* ---------- small helpers ---------- */
 const $ = id => document.getElementById(id);
-function toast(msg, t=5000){ const el=$('toast'); el.textContent=msg; el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none', t); console.log('[toast]', msg); }
-function cacheSet(k,v,ttl=60000){ localStorage.setItem('cache_'+k, JSON.stringify({v:v,exp:Date.now()+ttl})); }
-function cacheGet(k){ try{ const s=localStorage.getItem('cache_'+k); if(!s) return null; const o=JSON.parse(s); if(Date.now()>o.exp){ localStorage.removeItem('cache_'+k); return null; } return o.v; }catch(e){ return null;} }
+function logDebug(...args){ console.log('[FV]', ...args); }
+function toast(msg, t=4500){ const el=$('toast'); el.textContent=msg; el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none', t); console.log('[to]', msg); }
+function cacheSet(key, val, ttl=60_000){ localStorage.setItem('fv_'+key, JSON.stringify({v:val, exp:Date.now()+ttl})); }
+function cacheGet(key){ try{ const s=localStorage.getItem('fv_'+key); if(!s) return null; const o=JSON.parse(s); if(Date.now()>o.exp){ localStorage.removeItem('fv_'+key); return null; } return o.v; }catch(e){return null;} }
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+function safeJSONFetch(url){ return fetchWithFallback(url, true); }
+function safeTextFetch(url){ return fetchWithFallback(url, false); }
 
-/* robust fetch JSON/text with direct -> proxy fallbacks */
-async function fetchJSONWithFallback(url){
+/* Robust fetch with fallback proxies
+   tries direct -> PROXY -> ALT_PROXY
+*/
+async function fetchWithFallback(url, expectJson=true){
+  // try direct
   try{
-    const r = await fetch(url);
-    if (r.ok) return await r.json();
-    console.warn('direct fetch fail', url, r.status);
-    // try primary proxy
-    try{
-      const rp = await fetch(PROXY + encodeURIComponent(url));
-      if (rp.ok) return await rp.json();
-    }catch(e){ console.warn('proxy fail 1', e); }
-    // try alt proxy
-    try{
-      const ra = await fetch(ALT_PROXY + encodeURIComponent(url));
-      if (ra.ok) return await ra.json();
-    }catch(e){ console.warn('proxy fail 2', e); }
-    throw new Error('All fetch attempts failed for JSON');
-  }catch(e){
-    console.warn('fetchJSONWithFallback error', e);
-    throw e;
-  }
-}
-async function fetchTextWithFallback(url){
+    const res = await fetch(url);
+    if (res.ok){
+      return expectJson ? await res.json() : await res.text();
+    } else {
+      logDebug('Direct fetch non-ok', url, res.status);
+    }
+  }catch(e){ logDebug('Direct fetch error', e.message || e); }
+
+  // try primary proxy
   try{
-    const r = await fetch(url);
-    if (r.ok) return await r.text();
-    // proxy fallback
-    try{
-      const rp = await fetch(PROXY + encodeURIComponent(url));
-      if (rp.ok) return await rp.text();
-    }catch(e){ console.warn('text proxy1 fail', e); }
-    try{
-      const ra = await fetch(ALT_PROXY + encodeURIComponent(url));
-      if (ra.ok) return await ra.text();
-    }catch(e){ console.warn('text proxy2 fail', e); }
-    return null;
-  }catch(e){ console.warn('fetchTextWithFallback', e); return null; }
+    const purl = PROXY + encodeURIComponent(url);
+    const res = await fetch(purl);
+    if (res.ok) return expectJson ? await res.json() : await res.text();
+  }catch(e){ logDebug('Proxy1 fail', e.message || e); }
+
+  // try alt proxy
+  try{
+    const aurl = ALT_PROXY + encodeURIComponent(url);
+    const res = await fetch(aurl);
+    if (res.ok) return expectJson ? await res.json() : await res.text();
+  }catch(e){ logDebug('Proxy2 fail', e.message || e); }
+
+  throw new Error('All fetch attempts failed: ' + url);
 }
 
-/* ---------------- load top coins ---------------- */
+/* ---------- Load Top 100 Coins (CoinGecko) ---------- */
 async function loadTopCoins(){
   $('marketStatus').textContent = 'Loading top ' + MAX_COINS + '...';
-  const cached = cacheGet('top100_v4');
-  if (cached){ coins = cached; buildAssets(); setTimeout(()=> fetchTopCoins(true), 1200); return; }
+  const cached = cacheGet('top100_v5');
+  if (cached){ coins = cached; buildAssetList(); setTimeout(()=> fetchTopCoins(true), 800); return; }
   await fetchTopCoins(false);
 }
+
 async function fetchTopCoins(silent=false){
   try{
-    let collected=[];
-    let page=1, per=250;
+    let page = 1, per = 250, collected = [];
     while (collected.length < MAX_COINS){
       const url = `${COINGECKO}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${per}&page=${page}&price_change_percentage=24h,1h`;
-      const res = await fetchJSONWithFallback(url);
-      if (!Array.isArray(res) || res.length===0) break;
+      const res = await safeJSONFetch(url);
+      if (!Array.isArray(res) || res.length === 0) break;
       collected = collected.concat(res);
       page++;
-      await new Promise(r=>setTimeout(r,160));
+      await sleep(POLITE_MS);
     }
-    coins = collected.slice(0,MAX_COINS).map(c => ({ id:c.id, symbol:(c.symbol||'').toLowerCase(), name:c.name, image:c.image, price:c.current_price, mcap:c.market_cap, change24:c.price_change_percentage_24h, change1h:c.price_change_percentage_1h_in_currency }));
+    coins = collected.slice(0, MAX_COINS).map(c => ({
+      id: c.id,
+      symbol: (c.symbol||'').toLowerCase(),
+      name: c.name,
+      image: c.image,
+      price: c.current_price,
+      mcap: c.market_cap,
+      change24: c.price_change_percentage_24h,
+      change1h: c.price_change_percentage_1h_in_currency
+    }));
     coinMap = {}; coins.forEach(c => coinMap[c.symbol] = c);
-    cacheSet('top100_v4', coins, 90_000);
-    buildAssets();
+    cacheSet('top100_v5', coins, 90_000);
+    buildAssetList();
     if (!silent) toast('Top 100 loaded');
-  }catch(e){ console.error(e); toast('Failed loading top coins: ' + (e.message||e)); $('marketStatus').textContent = 'Failed to load top coins'; }
-}
-function buildAssets(){
-  const node = $('assetsList'); node.innerHTML = '';
-  coins.forEach((c,i)=>{
-    const r = document.createElement('div'); r.className='asset-row';
-    r.innerHTML = `<div class="asset-left"><div class="asset-logo"><img src="${c.image||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div><div class="asset-meta"><div class="asset-name">${c.symbol.toUpperCase()} • ${c.name}</div><div class="asset-sub">${formatMcap(c.mcap)} • 24h: ${c.change24?c.change24.toFixed(2)+'%':'-'}</div></div></div><div class="badge">#${i+1}</div>`;
-    r.addEventListener('click', ()=> selectAsset(c.symbol));
-    node.appendChild(r);
-  });
-  $('marketStatus').textContent = `Top ${coins.length} • click an asset`;
+  }catch(e){
+    console.error('fetchTopCoins error', e);
+    $('marketStatus').textContent = 'Failed to load coins';
+    toast('Top coin load failed: ' + (e.message||e));
+  }
 }
 
-/* ---------------- select asset and load candles+news ---------------- */
-async function selectAsset(symbol){
-  const s = (symbol||'').toLowerCase();
+function buildAssetList(){
+  const node = $('assetsList'); node.innerHTML = '';
+  coins.forEach((c, i) => {
+    const row = document.createElement('div'); row.className='asset-row';
+    row.innerHTML = `
+      <div class="asset-left">
+        <div class="asset-logo"><img src="${c.image||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>
+        <div class="asset-meta"><div class="asset-name">${c.symbol.toUpperCase()} • ${c.name}</div><div class="asset-sub">${formatMcap(c.mcap)} • 24h: ${c.change24?c.change24.toFixed(2)+'%':'-'}</div></div>
+      </div>
+      <div class="badge">#${i+1}</div>
+    `;
+    row.addEventListener('click', ()=> onAssetClicked(c.symbol));
+    node.appendChild(row);
+  });
+  $('marketStatus').textContent = `Top ${coins.length} loaded • click an asset`;
+}
+
+/* ---------- Assets: on click -> load chart & news ---------- */
+async function onAssetClicked(symbol){
+  const s = symbol.toLowerCase();
   const coin = coinMap[s];
-  if (!coin) return toast('Coin not available: ' + symbol);
+  if (!coin){ toast('Asset not found'); return; }
   selected = coin;
-  $('chartTitle').textContent = `${coin.symbol.toUpperCase()} • ${coin.name}`;
-  $('chartSubtitle').textContent = `${formatMoney(coin.price)} • ${formatMcap(coin.mcap)}`;
-  $('btnRunMission').disabled = false;
   $('assetDetail').style.display = 'block';
   $('assetName').textContent = `${coin.name} (${coin.symbol.toUpperCase()})`;
   $('assetLogo').src = coin.image || '';
-  $('detailPrice').textContent = 'Price: ' + formatMoney(coin.price);
-  $('detailMcap').textContent = 'Market Cap: ' + formatMcap(coin.mcap);
+  $('detailPrice').textContent = 'Price: ' + formatPrice(coin.price);
+  $('detailMcap').textContent = 'Mcap: ' + formatMcap(coin.mcap);
   $('detail24h').textContent = '24h: ' + (coin.change24? coin.change24.toFixed(2)+'%':'-');
-  // load candles and indicators
-  await loadCandlesRobust(coin.id, parseInt($('tfSelect').value));
-  // fetch news (3 items last 24h)
+  $('btnRunMission').disabled = false;
+  // load candles
+  await loadAndRenderChart(coin.id, parseInt($('tfSelector').value || 30));
+  // load news
   await loadNewsForAsset(coin);
 }
 
-/* ---------------- robust candle load and render ---------------- */
-async function loadCandlesRobust(coinId, days){
+/* ---------- Chart: TradingView Lightweight Charts setup ---------- */
+function createOrResetChart(){
+  // destroy previous chart if exists
   try{
-    // ensure any existing chart is destroyed before using same canvas
-    destroyAllCharts();
-
-    // try ohlc first (supported for some day values)
-    const ohlcDays = [1,7,14,30,90,180,365].includes(days)? days : (days<=7?7:30);
-    const ohlcUrl = `${COINGECKO}/coins/${encodeURIComponent(coinId)}/ohlc?vs_currency=usd&days=${ohlcDays}`;
-    let ohlc = null;
-    try { ohlc = await fetchJSONWithFallback(ohlcUrl); } catch(e){ console.warn('ohlc failed', e); }
-    if (Array.isArray(ohlc) && ohlc.length){
-      const ds = ohlc.map(i => ({x:new Date(i[0]), o:i[1], h:i[2], l:i[3], c:i[4]}));
-      renderCandles(ds);
-      const closes = ds.map(d=>d.c);
-      computeIndicatorsAndUI(closes, ds.map(d=>d.x.getTime()));
-      return;
-    }
-    // fallback market_chart
-    const mcUrl = `${COINGECKO}/coins/${encodeURIComponent(coinId)}/market_chart?vs_currency=usd&days=${days}&interval=hourly`;
-    const mc = await fetchJSONWithFallback(mcUrl);
-    if (mc && Array.isArray(mc.prices) && mc.prices.length){
-      // produce ohlc grouped hourly
-      const ohlcBuilt = buildOHLCFromPrices(mc.prices, 1);
-      renderCandles(ohlcBuilt);
-      computeIndicatorsAndUI(mc.prices.map(p=>p[1]), mc.prices.map(p=>p[0]));
-      return;
-    }
-    // last resort: single bar
-    const single = [{x:new Date(), o:selected.price, h:selected.price, l:selected.price, c:selected.price}];
-    renderCandles(single);
-    computeIndicatorsAndUI([selected.price], [Date.now()]);
-  }catch(e){ console.error('loadCandlesRobust', e); toast('Chart load error: ' + (e.message||e)); }
-}
-
-/* destroy existing charts safely */
-function destroyAllCharts(){
-  try{
-    if (mainChart){ mainChart.destroy(); mainChart = null; }
-    if (rsiChart){ rsiChart.destroy(); rsiChart = null; }
-    if (macdChart){ macdChart.destroy(); macdChart = null; }
-    // clear canvases to ensure Chart can reuse
-    try{ const c = $('canvasMain'); const ctx = c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }catch(e){}
-    try{ const r = $('canvasRsi'); r.getContext('2d').clearRect(0,0,r.width,r.height); }catch(e){}
-    try{ const m = $('canvasMacd'); m.getContext('2d').clearRect(0,0,m.width,m.height); }catch(e){}
-  }catch(e){ console.warn('destroyAllCharts error', e); }
-}
-
-/* render candlestick chart (with placeholder overlay line datasets) */
-function renderCandles(ohlcData){
-  const canvas = $('canvasMain');
-  // ensure canvas matches displayed size (helps Chart create correct backing store)
-  canvas.width = canvas.clientWidth;
-  canvas.height = canvas.clientHeight;
-
-  const ctx = canvas.getContext('2d');
-  if (mainChart){ mainChart.destroy(); mainChart = null; }
-
-  // datasets: first is candlestick; others are overlays (EMA/BB placeholder)
-  const datasets = [
-    { label: selected ? selected.symbol.toUpperCase() : 'asset', data: ohlcData, color:{up:'#16a34a', down:'#ef4444'} },
-    { type:'line', label:'EMA9', data:[], borderColor:'#0ea5e9', borderWidth:1.6, pointRadius:0, yAxisID:'y' },
-    { type:'line', label:'EMA21', data:[], borderColor:'#7c3aed', borderWidth:1.2, pointRadius:0, yAxisID:'y' },
-    { type:'line', label:'EMA50', data:[], borderColor:'#f59e0b', borderWidth:1.2, pointRadius:0, yAxisID:'y' },
-    { type:'line', label:'BBU', data:[], borderColor:'#94a3b8', borderWidth:1, pointRadius:0, borderDash:[4,4], yAxisID:'y' },
-    { type:'line', label:'BBL', data:[], borderColor:'#94a3b8', borderWidth:1, pointRadius:0, borderDash:[4,4], yAxisID:'y' }
-  ];
-
-  mainChart = new Chart(ctx, {
-    type: 'candlestick',
-    data: { datasets },
-    options: {
-      responsive:true, maintainAspectRatio:false,
-      plugins:{ legend:{ display:true, position:'top'}, tooltip:{mode:'index', intersect:false} },
-      scales:{ x:{ type:'time', time:{ unit:'day' }, ticks:{ color: '#0b1220' } }, y:{ position:'right', ticks:{ color:'#0b1220' } } }
-    }
+    if (tvChart){ tvChart.remove(); tvChart = null; candleSeries = null; emaSeries=null; ema21Series=null; ema50Series=null; bbUpperSeries=null; bbLowerSeries=null; }
+  }catch(e){ console.warn('chart destroy error', e); }
+  // create container element
+  const container = document.getElementById('tvChart');
+  container.innerHTML = ''; // clear
+  // create chart
+  tvChart = LightweightCharts.createChart(container, {
+    width: container.clientWidth || 800,
+    height: container.clientHeight || 520,
+    layout: { backgroundColor: 'transparent', textColor: '#071127' },
+    rightPriceScale: { borderColor: 'rgba(0,0,0,0.06)' },
+    timeScale: { borderColor: 'rgba(0,0,0,0.06)', timeVisible: true, secondsVisible: false }
   });
+  window.addEventListener('resize', () => { try{ tvChart.applyOptions({ width: container.clientWidth, height: container.clientHeight }); }catch(e){} });
+  // add series
+  candleSeries = tvChart.addCandlestickSeries({ upColor: '#16a34a', downColor:'#ef4444', borderVisible:false, wickVisible:true });
+  // overlay lines
+  emaSeries = tvChart.addLineSeries({ color:'#0ea5e9', lineWidth:1.6 });
+  ema21Series = tvChart.addLineSeries({ color:'#7c3aed', lineWidth:1.2 });
+  ema50Series = tvChart.addLineSeries({ color:'#f59e0b', lineWidth:1.2 });
+  bbUpperSeries = tvChart.addLineSeries({ color:'#94a3b8', lineWidth:1, lineStyle: LightweightCharts.LineStyle.Dashed });
+  bbLowerSeries = tvChart.addLineSeries({ color:'#94a3b8', lineWidth:1, lineStyle: LightweightCharts.LineStyle.Dashed });
 }
 
-/* build OHLC from price ticks grouped by hoursPerBar */
-function buildOHLCFromPrices(pricesArr, hoursPerBar=1){
-  if (!pricesArr || pricesArr.length === 0) return [];
+/* ---------- Load OHLC and render to chart ---------- */
+async function loadAndRenderChart(coinId, days){
+  try{
+    // create chart fresh (destroys previous)
+    createOrResetChart();
+
+    // try ohlc first
+    let ohlc = null;
+    const allowedDays = [1,7,14,30,90,180,365,'max'];
+    const dval = allowedDays.includes(days) ? days : (days<=7?7:30);
+    const ohlcUrl = `${COINGECKO}/coins/${encodeURIComponent(coinId)}/ohlc?vs_currency=usd&days=${dval}`;
+    try{ ohlc = await safeJSONFetch(ohlcUrl); } catch(e){ logDebug('ohlc fetch failed', e.message || e); }
+    if (Array.isArray(ohlc) && ohlc.length){
+      const series = ohlc.map(i => ({ time: Math.floor(i[0]/1000), open: i[1], high: i[2], low: i[3], close: i[4]}));
+      candleSeries.setData(series);
+      // compute indicators (closes)
+      const closes = series.map(s => s.close);
+      const times = series.map(s => s.time*1000);
+      computeIndicatorsAndRender(closes, times, series);
+      return;
+    }
+    // fallback to market_chart
+    const mcUrl = `${COINGECKO}/coins/${encodeURIComponent(coinId)}/market_chart?vs_currency=usd&days=${days}&interval=hourly`;
+    const mc = await safeJSONFetch(mcUrl);
+    if (mc && Array.isArray(mc.prices) && mc.prices.length){
+      // build OHLC grouped hourly
+      const ohlcBuilt = buildOHLCFromPrices(mc.prices, 1);
+      // convert to lightweight format
+      const series = ohlcBuilt.map(bar => ({ time: Math.floor(bar.x.getTime()/1000), open: bar.o, high: bar.h, low: bar.l, close: bar.c }));
+      candleSeries.setData(series);
+      const closes = series.map(s => s.close);
+      const times = series.map(s => s.time*1000);
+      computeIndicatorsAndRender(closes, times, series);
+      return;
+    }
+    // ultimate fallback: single candle from current price
+    const now = Math.floor(Date.now()/1000);
+    const single = [{ time: now, open: selected.price, high: selected.price, low: selected.price, close: selected.price }];
+    candleSeries.setData(single);
+    computeIndicatorsAndRender([selected.price], [now*1000], single);
+  }catch(e){
+    console.error('loadAndRenderChart error', e);
+    toast('Chart load failed: ' + (e.message||e));
+  }
+}
+
+/* ---------- Helpers: build OHLC from tick prices ---------- */
+function buildOHLCFromPrices(pricesArray, hoursPerBar=1){
+  // pricesArray: [[ts_ms, price], ...]
+  if (!pricesArray || !pricesArray.length) return [];
   const msPerBar = hoursPerBar * 3600 * 1000;
   const bars = [];
   let cur = null;
-  for (let i=0;i<pricesArr.length;i++){
-    const ts = pricesArr[i][0];
-    const p = pricesArr[i][1];
+  for (let i=0;i<pricesArray.length;i++){
+    const ts = pricesArray[i][0];
+    const p = pricesArray[i][1];
     if (!cur){
       const start = Math.floor(ts / msPerBar) * msPerBar;
-      cur = { ts:start, o:p, h:p, l:p, c:p };
+      cur = { ts: start, o:p, h:p, l:p, c:p };
     } else {
       if (ts - cur.ts < msPerBar){
         cur.h = Math.max(cur.h, p); cur.l = Math.min(cur.l, p); cur.c = p;
       } else {
-        bars.push({ x:new Date(cur.ts), o:cur.o, h:cur.h, l:cur.l, c:cur.c });
+        bars.push({ x: new Date(cur.ts), o:cur.o, h:cur.h, l:cur.l, c:cur.c });
         const start = Math.floor(ts / msPerBar) * msPerBar;
         cur = { ts:start, o:p, h:p, l:p, c:p };
       }
@@ -384,258 +451,339 @@ function buildOHLCFromPrices(pricesArr, hoursPerBar=1){
   return bars;
 }
 
-/* compute indicators and update overlays and subcharts */
-function computeIndicatorsAndUI(closes, timestamps){
+/* ---------- Compute indicators and render overlays + subpanels ---------- */
+async function computeIndicatorsAndRender(closes, timestampsMs, seriesCandles){
   try{
-    // compute EMAs
-    const ema9 = technicalindicators.EMA.calculate({period:9, values:closes});
-    const ema21 = technicalindicators.EMA.calculate({period:21, values:closes});
-    const ema50 = technicalindicators.EMA.calculate({period:50, values:closes});
-    // BBands
-    const bb = technicalindicators.BollingerBands.calculate({period:20, stdDev:2, values:closes});
-    // ATR estimate via SMA of true ranges if no HL data
-    const atr = computeATRapprox(closes);
-    // RSI and MACD
-    const rsi = technicalindicators.RSI.calculate({period:14, values:closes});
-    const macd = technicalindicators.MACD.calculate({values:closes, fastPeriod:12, slowPeriod:26, signalPeriod:9, SimpleMAOscillator:false, SimpleMASignal:false});
+    // calculate EMAs
+    const ema9 = technicalindicators.EMA.calculate({ period:9, values:closes });
+    const ema21 = technicalindicators.EMA.calculate({ period:21, values:closes });
+    const ema50 = technicalindicators.EMA.calculate({ period:50, values:closes });
+    // Bollinger Bands (20,2)
+    const bb = technicalindicators.BollingerBands.calculate({ period:20, stdDev:2, values:closes });
+    // ATR (14) using highs/lows if available; approximate if not
+    let highs = [], lows = [];
+    if (seriesCandles && seriesCandles.length){
+      highs = seriesCandles.map(d => d.high);
+      lows = seriesCandles.map(d => d.low);
+    }
+    let atr = [];
+    if (highs.length === closes.length){
+      atr = technicalindicators.ATR.calculate({ period:14, high:highs, low:lows, close:closes });
+    } else {
+      // fallback simple ATR approx
+      const trs = []; for (let i=1;i<closes.length;i++) trs.push(Math.abs(closes[i]-closes[i-1])); atr = technicalindicators.SMA.calculate({ period:14, values:trs });
+    }
+    // RSI & MACD
+    const rsi = technicalindicators.RSI.calculate({ period:14, values:closes });
+    const macd = technicalindicators.MACD.calculate({ values:closes, fastPeriod:12, slowPeriod:26, signalPeriod:9, SimpleMAOscillator:false, SimpleMASignal:false });
 
-    // attach overlay arrays to main chart datasets (align to right)
-    attachOverlays(ema9, ema21, ema50, bb);
+    // attach EMA lines to chart (align to right)
+    const len = seriesCandles.length;
+    const mapToSeries = (arr) => {
+      const out = [];
+      const offset = len - arr.length;
+      for (let i=0;i<len;i++){
+        const time = seriesCandles[i].time;
+        out.push({ time: time, value: (i-offset>=0 ? arr[i-offset] : null) });
+      }
+      return out;
+    };
 
-    // render RSI and MACD subpanels
-    renderRsiChart(rsi);
-    renderMacdChart(macd);
+    const ema9mapped = ema9.length ? mapToSeries(ema9) : [];
+    const ema21mapped = ema21.length ? mapToSeries(ema21) : [];
+    const ema50mapped = ema50.length ? mapToSeries(ema50) : [];
+    const bbumapped = bb.length ? mapToSeries(bb.map(x=>x.upper)) : [];
+    const bblmapped = bb.length ? mapToSeries(bb.map(x=>x.lower)) : [];
 
-    // compute callouts and archive
-    computeDITIMPACallouts(ema9, ema21, rsi, macd, atr);
-  }catch(e){ console.warn('computeIndicatorsAndUI', e); }
-}
+    // set overlay series data (filter nulls out)
+    emaSeries.setData(ema9mapped.filter(p=>p.value!==null));
+    ema21Series.setData(ema21mapped.filter(p=>p.value!==null));
+    ema50Series.setData(ema50mapped.filter(p=>p.value!==null));
+    bbUpperSeries.setData(bbumapped.filter(p=>p.value!==null));
+    bbLowerSeries.setData(bblmapped.filter(p=>p.value!==null));
 
-/* approximate ATR using SMA of absolute close changes (fallback) */
-function computeATRapprox(closes){
-  const trs = [];
-  for (let i=1;i<closes.length;i++) trs.push(Math.abs(closes[i]-closes[i-1]));
-  return technicalindicators.SMA.calculate({period:14, values:trs});
-}
+    // render RSI in its box using a small Lightweight Chart
+    renderMiniLineChart('rsiChartContainer', rsi, { min:0, max:100, lineColor:'#7c3aed', title:'RSI(14)' });
+    // render MACD histogram + lines
+    renderMacdMini('macdChartContainer', macd);
 
-/* attach overlays (map shorter arrays to end of candlestick data) */
-function attachOverlays(ema9, ema21, ema50, bb){
-  if (!mainChart) return;
-  const base = mainChart.data.datasets[0].data;
-  const len = base.length;
-  // prepare arrays filled with null
-  const makeArr = (src) => { const res = new Array(len).fill(null); const offset = len - src.length; for (let i=0;i<src.length;i++){ if (offset+i>=0 && offset+i<len) res[offset+i] = { x: base[offset+i].x, y: src[i] }; } return res; };
-  const ema9Arr = ema9.length ? makeArr(ema9) : new Array(len).fill(null);
-  const ema21Arr = ema21.length ? makeArr(ema21) : new Array(len).fill(null);
-  const ema50Arr = ema50.length ? makeArr(ema50) : new Array(len).fill(null);
-  const bbuArr = bb.length ? makeArr(bb.map(x=>x.upper)) : new Array(len).fill(null);
-  const bblArr = bb.length ? makeArr(bb.map(x=>x.lower)) : new Array(len).fill(null);
-
-  // ensure datasets exist
-  mainChart.data.datasets.forEach(ds => {
-    if (ds.label === 'EMA9') ds.data = ema9Arr;
-    if (ds.label === 'EMA21') ds.data = ema21Arr;
-    if (ds.label === 'EMA50') ds.data = ema50Arr;
-    if (ds.label === 'BBU') ds.data = bbuArr;
-    if (ds.label === 'BBL') ds.data = bblArr;
-  });
-  mainChart.update();
-}
-
-/* RSI render */
-function renderRsiChart(rsiValues){
-  const c = $('canvasRsi');
-  c.width = c.clientWidth; c.height = c.clientHeight;
-  const ctx = c.getContext('2d');
-  if (rsiChart){ rsiChart.destroy(); rsiChart = null; }
-  rsiChart = new Chart(ctx, {
-    type:'line',
-    data:{ labels: rsiValues.map((_,i)=>i), datasets:[{ label:'RSI', data:rsiValues, borderColor:'#7c3aed', pointRadius:0, fill:false }] },
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ min:0, max:100 } } }
-  });
-}
-
-/* MACD render */
-function renderMacdChart(macd){
-  const c = $('canvasMacd'); c.width = c.clientWidth; c.height = c.clientHeight;
-  const ctx = c.getContext('2d'); if (macdChart){ macdChart.destroy(); macdChart = null; }
-  const hist = macd.map(m => m ? m.histogram : null);
-  const sig = macd.map(m => m ? m.signal : null);
-  const macdLine = macd.map(m => m ? m.MACD : null);
-  macdChart = new Chart(ctx, {
-    type:'bar',
-    data:{ labels: hist.map((_,i)=>i), datasets:[
-      { type:'bar', label:'Hist', data:hist, backgroundColor: hist.map(v => v>=0 ? '#16a34a' : '#ef4444') },
-      { type:'line', label:'Signal', data:sig, borderColor:'#0ea5e9', pointRadius:0, fill:false },
-      { type:'line', label:'MACD', data:macdLine, borderColor:'#7c3aed', pointRadius:0, fill:false }
-    ]},
-    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
-  });
-}
-
-/* compute DITIMPA callouts and append archive entries */
-function computeDITIMPACallouts(ema9, ema21, rsi, macd, atr){
-  const cnode = $('callouts'); cnode.innerHTML = '';
-  const calls = [];
-  // ema cross
-  if (ema9.length >= 2 && ema21.length >= 2){
-    const k = ema9.length-1; const a = ema9[k], aPrev = ema9[k-1]; const b = ema21[ema21.length-1], bPrev = ema21[ema21.length-2]||b;
-    if (a > b && aPrev <= bPrev) calls.push('EMA9 crossed above EMA21 — short-term bullish');
-    if (a < b && aPrev >= bPrev) calls.push('EMA9 crossed below EMA21 — short-term bearish');
+    // compute DITIMPA callouts & archive them
+    computeAndShowCallouts(ema9, ema21, rsi, macd, atr);
+  }catch(e){
+    console.error('computeIndicatorsAndRender error', e);
   }
-  // rsi
+}
+
+/* ---------- render mini line chart (Lightweight) ---------- */
+function renderMiniLineChart(containerId, values, opts={}){
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const canvas = document.createElement('div');
+  canvas.style.width='100%'; canvas.style.height='100%';
+  container.appendChild(canvas);
+  const chart = LightweightCharts.createChart(canvas, {
+    layout:{ backgroundColor:'transparent', textColor:'#071127' },
+    rightPriceScale:{ visible:false }, timeScale:{ visible:false }, grid:{ vertLines:{ visible:false }, horzLines:{ visible:false } }
+  });
+  const s = chart.addLineSeries({ color: opts.lineColor || '#0ea5e9', lineWidth: 1.4 });
+  const data = values.map((v,i)=> ({ time: i, value: v }) ).filter(x=>x.value!==null && x.value!==undefined);
+  s.setData(data);
+}
+
+/* ---------- render MACD mini chart ---------- */
+function renderMacdMini(containerId, macd){
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  const canvas = document.createElement('div');
+  canvas.style.width='100%'; canvas.style.height='100%';
+  container.appendChild(canvas);
+  const chart = LightweightCharts.createChart(canvas, {
+    layout:{ backgroundColor:'transparent', textColor:'#071127' },
+    rightPriceScale:{ visible:false }, timeScale:{ visible:false }, grid:{ vertLines:{ visible:false }, horzLines:{ visible:false } }
+  });
+  // histogram as bar series requires providing positive & negative colors: use two series
+  const histData = macd.map((m,i)=> ({ time:i, value: m ? m.histogram : 0 }) );
+  const macdSeries = chart.addHistogramSeries({ color:'#16a34a', base:0, priceFormat:{ type:'volume' } });
+  macdSeries.setData(histData);
+  const sig = chart.addLineSeries({ color:'#0ea5e9', lineWidth:1 });
+  const macdLine = chart.addLineSeries({ color:'#7c3aed', lineWidth:1 });
+  const sigData = macd.map((m,i)=> ({ time:i, value: m ? m.signal : null })).filter(x=>x.value!==null);
+  const macdData = macd.map((m,i)=> ({ time:i, value: m ? m.MACD : null })).filter(x=>x.value!==null);
+  sig.setData(sigData); macdLine.setData(macdData);
+}
+
+/* ---------- compute DITIMPA callouts ---------- */
+function computeAndShowCallouts(ema9, ema21, rsi, macd, atr){
+  const container = $('calloutContainer'); container.innerHTML = '';
+  const calls = [];
+
+  // EMA cross detection (last points)
+  if (ema9.length>=2 && ema21.length>=2){
+    const a = ema9[ema9.length-1], pa = ema9[ema9.length-2];
+    const b = ema21[ema21.length-1], pb = ema21[ema21.length-2] || b;
+    if (a > b && pa <= pb) calls.push('EMA9 crossed above EMA21 — bullish');
+    if (a < b && pa >= pb) calls.push('EMA9 crossed below EMA21 — bearish');
+  }
+
+  // RSI thresholds
   if (rsi.length){
     const last = rsi[rsi.length-1];
-    if (last > 70) calls.push('RSI > 70 — overbought');
+    if (last > 70) calls.push('RSI > 70 — possible overbought');
     if (last < 30) calls.push('RSI < 30 — oversold');
   }
-  // macd hist spikes
+
+  // MACD histogram acceleration
   if (macd.length){
     const hist = macd.map(m=>m.histogram);
-    const last = hist[hist.length-1]||0; const prev = hist[hist.length-2]||0;
-    if (last > prev*1.8 && last > 0) calls.push('MACD histogram rising quickly — momentum building');
-    if (last < prev*1.8 && last < 0) calls.push('MACD histogram dropping — momentum weakening');
+    const lastH = hist[hist.length-1] || 0, prevH = hist[hist.length-2] || 0;
+    if (lastH > prevH * 1.8 && lastH > 0) calls.push('MACD histogram rising quickly — momentum building');
+    if (lastH < prevH * 1.8 && lastH < 0) calls.push('MACD histogram dropping — momentum weakening');
   }
-  // atr
+
+  // ATR elevated? approximate threshold
   if (atr && atr.length){
     const lastAtr = atr[atr.length-1] || 0;
-    if (lastAtr > (selected.price * 0.03)) calls.push('ATR elevated — volatility increased');
+    if (selected && lastAtr > (selected.price * 0.03)) calls.push('ATR elevated — volatility higher than usual');
   }
 
   calls.slice(0,4).forEach(c => {
-    const div = document.createElement('div'); div.className='callout-item'; div.textContent = c; $('callouts').appendChild(div);
+    const el = document.createElement('div'); el.className='callout'; el.textContent = c; container.appendChild(el);
     archive.unshift({ type:'callout', coin:selected?selected.symbol:'', text:c, ts:Date.now() });
   });
   $('archivePanel').textContent = `Archive entries: ${archive.length}`;
 }
 
-/* ----------------- news: fetch 3 headlines last 24h w/ thumbnails ----------------- */
+/* ---------- News fetching for asset: up to 3 items in last 24 hours ---------- */
 async function loadNewsForAsset(coin){
-  const container = $('newsList'); container.innerHTML = '<div class="small">Loading news (24h)…</div>';
-  // Google News RSS (when:1d) format
-  const base = `https://news.google.com/rss/search?q=${encodeURIComponent(coin.name)}+when:1d`;
-  // robust fetch: try direct -> proxy -> alt proxy
-  const text = await fetchTextWithFallback(base);
-  if (!text) { container.innerHTML = '<div class="small">No news (blocked or unavailable)</div>'; return; }
-  const dom = new DOMParser().parseFromString(text,'text/xml');
-  const items = dom.querySelectorAll('item');
-  container.innerHTML = '';
-  let count = 0;
-  for (let i=0;i<items.length && count<3;i++){
-    const it = items[i];
-    const title = it.querySelector('title')?.textContent || '';
-    const link = it.querySelector('link')?.textContent || '';
-    const desc = it.querySelector('description')?.textContent || '';
-    // try to extract <img> from description
-    let img = null;
-    const m = desc && desc.match(/<img[^>]+src=["']([^"']+)["']/i);
-    if (m) img = m[1];
-    // try to fetch og:image from the article page via proxy (best-effort)
-    if (!img && link){
-      try{
-        const html = await fetchTextWithFallback(link);
-        if (html){
-          const mo = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) || html.match(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i);
-          if (mo) img = mo[1];
-        }
-      }catch(e){ /* ignore */ }
+  const container = $('newsList'); container.innerHTML = '<div class="small muted-ink">Loading news (24h)…</div>';
+  try{
+    const q = `https://news.google.com/rss/search?q=${encodeURIComponent(coin.name)}+when:1d`;
+    const xmlText = await safeTextFetch(q);
+    if (!xmlText){ container.innerHTML = '<div class="small muted-ink">No news (blocked or no results)</div>'; return; }
+    const dom = new DOMParser().parseFromString(xmlText,'text/xml');
+    const items = dom.querySelectorAll('item');
+    container.innerHTML = '';
+    let count = 0;
+    for (let i=0;i<items.length && count<3;i++){
+      const it = items[i];
+      const title = it.querySelector('title')?.textContent || '';
+      const link = it.querySelector('link')?.textContent || '';
+      const desc = it.querySelector('description')?.textContent || '';
+      // try extract image from desc
+      let img = null;
+      const m = desc && desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+      if (m) img = m[1];
+      // attempt OG image extract via proxy if none
+      if (!img && link){
+        try{
+          const pageHtml = await safeTextFetch(link);
+          if (pageHtml){
+            const mo = pageHtml.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) || pageHtml.match(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i);
+            if (mo) img = mo[1];
+          }
+        }catch(e){ /* ignore */ }
+      }
+
+      const el = document.createElement('div'); el.className = 'floating-news';
+      el.innerHTML = `<img class="news-thumb" src="${img||''}" onerror="this.style.display='none'"><div><div style="font-weight:700"><a href="${link}" target="_blank" style="color:var(--ink);text-decoration:none">${title}</a></div><div class="small muted-ink" style="margin-top:6px">${link}</div></div>`;
+      container.appendChild(el);
+      count++;
     }
-    const el = document.createElement('div'); el.className = 'floating-news';
-    el.innerHTML = `<img class="news-thumb" src="${img||''}" onerror="this.style.display='none'"><div><div style="font-weight:700"><a href="${link}" target="_blank" style="color:var(--ink);text-decoration:none">${title}</a></div><div class="small" style="margin-top:6px;color:var(--muted)">${link}</div></div>`;
-    container.appendChild(el);
-    count++;
+    if (count===0) container.innerHTML = '<div class="small muted-ink">No headlines in last 24 hours</div>';
+  }catch(e){
+    console.error('loadNewsForAsset error', e);
+    container.innerHTML = '<div class="small muted-ink">Error loading news</div>';
   }
-  if (count === 0) container.innerHTML = '<div class="small">No headlines in the last 24 hours</div>';
 }
 
-/* ----------------- People: auto-select 200 and load 2 headlines each ----------------- */
-function buildPeopleList(){
-  const seed = ["Elon Musk","Vitalik Buterin","Changpeng Zhao","Michael Saylor","Cathie Wood","Larry Fink","Warren Buffett","Jamie Dimon","Bill Gates","Jeff Bezos","Andreas Antonopoulos","Naval Ravikant","Marc Andreessen","Ben Horowitz","Ray Dalio","Peter Thiel","Mark Cuban","Chamath Palihapitiya","Sam Altman","Jensen Huang","Tim Cook","Sundar Pichai","Christine Lagarde","Jerome Powell","Janet Yellen","Xi Jinping","Narendra Modi","Vladimir Putin","Michael Bloomberg","Larry Page","Sergey Brin","CZ"];
-  let arr = seed.slice();
+/* ---------- People (200) — build the list and progressively enrich ---------- */
+function buildPeopleAlwaysVisible(){
+  // curated seed of notable names (crypto, finance, policy, media). We'll auto-expand to 200.
+  const seed = [
+    "Elon Musk","Vitalik Buterin","Changpeng Zhao","Michael Saylor","Cathie Wood","Larry Fink","Warren Buffett","Jamie Dimon","Bill Gates","Jeff Bezos",
+    "Andreas Antonopoulos","Naval Ravikant","Marc Andreessen","Ben Horowitz","Ray Dalio","Peter Thiel","Mark Cuban","Chamath Palihapitiya","Sam Altman","Jensen Huang",
+    "Tim Cook","Sundar Pichai","Christine Lagarde","Jerome Powell","Janet Yellen","Xi Jinping","Narendra Modi","Vladimir Putin","Emmanuel Macron","Olaf Scholz",
+    "Mary Barra","Sheryl Sandberg","Reed Hastings","Susan Wojcicki","Michael Bloomberg","Larry Page","Sergey Brin","Cathie Wood","Steve Cohen","Daniel Loeb"
+  ];
+  const arr = seed.slice();
   while (arr.length < PEOPLE_COUNT) arr.push('Influencer ' + (arr.length+1));
-  people = arr.map((n,i)=>({ id:'p'+(i+1), name:n, conn:guessConnection(n), img:null, news:[] }));
-  renderPeople();
-  setTimeout(()=> enrichPeopleProgressive(0), 800);
+  people = arr.map((n,i) => ({ id:'p'+(i+1), name:n, conn:guessConnection(n), img:null, news:[] }));
+  renderPeopleAll();
+  // progressive enrichment: wiki thumbnail & 3 headlines when possible
+  setTimeout(()=> enrichPeopleProgressively(0), 900);
 }
+
 function guessConnection(name){
-  const map = { "Elon Musk":"Tesla / SpaceX", "Vitalik Buterin":"Ethereum", "Changpeng Zhao":"Binance", "Michael Saylor":"MicroStrategy", "Cathie Wood":"ARK Invest", "Larry Fink":"BlackRock", "Warren Buffett":"Berkshire", "Jamie Dimon":"JPMorgan" };
-  return map[name] || "Closest connection: —";
+  const map = {
+    "Elon Musk":"Tesla / SpaceX / X",
+    "Vitalik Buterin":"Ethereum",
+    "Changpeng Zhao":"Binance",
+    "Michael Saylor":"MicroStrategy",
+    "Cathie Wood":"ARK Invest",
+    "Larry Fink":"BlackRock",
+    "Warren Buffett":"Berkshire Hathaway",
+    "Jamie Dimon":"JPMorgan",
+    "Bill Gates":"Microsoft",
+    "Jeff Bezos":"Amazon / Blue Origin",
+    "Naval Ravikant":"Angel investor",
+    "Marc Andreessen":"a16z",
+    "Ray Dalio":"Bridgewater",
+    "Peter Thiel":"Founders Fund"
+  };
+  return map[name] ? `Closest connection: ${map[name]}` : 'Closest connection: —';
 }
-function renderPeople(){
+
+function renderPeopleAll(){
   const node = $('peopleScroll'); node.innerHTML = '';
   people.forEach(p => {
-    const card = document.createElement('div'); card.className='person-card';
-    card.innerHTML = `<div class="person-thumb"><img src="${p.img||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div><div style="flex:1"><div style="font-weight:800">${p.name}</div><div class="small" id="pconn-${p.id}" style="margin-top:6px">${p.conn}</div><div class="small" id="pnews-${p.id}" style="margin-top:6px">Loading...</div></div>`;
-    card.addEventListener('click', ()=> surfacePerson(p));
-    node.appendChild(card);
+    const el = document.createElement('div'); el.className = 'person-card';
+    el.innerHTML = `<div class="person-thumb"><img src="${p.img||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>
+      <div style="flex:1">
+        <div style="font-weight:800">${p.name}</div>
+        <div class="small muted-ink" id="conn-${p.id}" style="margin-top:6px">${p.conn}</div>
+        <div class="small muted-ink" id="news-${p.id}" style="margin-top:6px">Loading headlines...</div>
+      </div>`;
+    el.addEventListener('click', ()=> surfacePersonToAI(p.id));
+    node.appendChild(el);
   });
-  $('peoplePreview').textContent = 'People loaded (progressive headlines)';
+  $('peoplePreview').textContent = 'People loaded — headlines filling progressively';
 }
-async function enrichPeopleProgressive(start){
-  const batch = 10;
+
+async function enrichPeopleProgressively(start){
+  const batch = 12;
   for (let i=start;i<Math.min(people.length, start+batch); i++){
     const p = people[i];
     // try wiki thumbnail
     try{
-      const wiki = await fetchJSONWithFallback(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(p.name)}`);
+      const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(p.name)}`;
+      const wiki = await fetchWithFallback(wikiUrl, true);
       if (wiki && wiki.thumbnail && wiki.thumbnail.source) p.img = wiki.thumbnail.source;
-    }catch(e){}
-    // fetch 2 headlines last 3 days (Google News)
+    }catch(e){ /* ignore */ }
+
+    // fetch up to 3 recent headlines (1-3 days) with images
     try{
-      const rss = `https://news.google.com/rss/search?q=${encodeURIComponent(p.name)}+when:3d`;
-      const text = await fetchTextWithFallback(rss);
+      const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(p.name)}+when:3d`;
+      const text = await fetchWithFallback(rssUrl, false);
       if (text){
-        const dom = new DOMParser().parseFromString(text,'text/xml');
+        const dom = new DOMParser().parseFromString(text, 'text/xml');
         const items = dom.querySelectorAll('item');
         p.news = [];
-        for (let k=0;k<items.length && p.news.length<2;k++){
+        let count = 0;
+        for (let k=0;k<items.length && count<3;k++){
           const it = items[k];
           const title = it.querySelector('title')?.textContent || '';
           const link = it.querySelector('link')?.textContent || '';
-          p.news.push({title, link});
+          const desc = it.querySelector('description')?.textContent || '';
+          let img = null;
+          const m = desc && desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+          if (m) img = m[1];
+          if (!img && link){
+            // try OG extraction via proxy (best-effort)
+            try{
+              const page = await fetchWithFallback(link, false);
+              if (page){
+                const mo = page.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) || page.match(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i);
+                if (mo) img = mo[1];
+              }
+            }catch(e){}
+          }
+          p.news.push({ title, link, img });
+          count++;
         }
       }
-    }catch(e){ console.warn('person news fail', p.name, e); }
-    // update UI
-    const nEl = $('pnews-'+p.id);
-    if (nEl) nEl.innerHTML = p.news.length ? p.news.map(n=>`<div style="margin-top:6px"><a href="${n.link}" target="_blank" style="color:var(--ink);text-decoration:none">${n.title}</a></div>`).join('') : 'No recent headlines';
-    const imgEl = document.querySelector(`#peopleScroll img[src='${p.img||''}']`);
-    await new Promise(r=>setTimeout(r,140));
+    }catch(e){ console.warn('person news fetch fail', p.name, e); }
+    // update DOM entries
+    const newsEl = document.getElementById('news-'+p.id);
+    if (newsEl){
+      if (p.news && p.news.length){
+        newsEl.innerHTML = p.news.slice(0,3).map(n => `<div style="margin-top:6px"><a href="${n.link}" target="_blank" style="color:var(--ink);text-decoration:none">${n.title}</a></div>`).join('');
+      } else newsEl.textContent = 'No recent headlines';
+    }
+    const connEl = document.getElementById('conn-'+p.id);
+    if (connEl) connEl.textContent = p.conn;
+    await sleep(POLITE_MS);
   }
-  if (start + batch < people.length) setTimeout(()=> enrichPeopleProgressive(start+batch), 600);
+  if (start + batch < people.length) setTimeout(()=> enrichPeopleProgressively(start+batch), 600);
 }
-function surfacePerson(p){
-  // show in AI panel
-  let html = `<div style="font-weight:800">${p.name}</div><div class="small" style="margin-top:6px">${p.conn}</div>`;
-  if (p.news && p.news.length){ html += `<div style="margin-top:8px"><strong>Latest</strong></div>`; p.news.forEach(n=> html += `<div class="small" style="margin-top:6px"><a href="${n.link}" target="_blank" style="color:var(--ink);text-decoration:none">${n.title}</a></div>`); }
-  html += `<div style="margin-top:8px"><button class="pill" onclick="generateMissionFromPerson('${p.id}')">Use in Mission</button></div>`;
+
+/* ---------- surface person to AI panel (Vision 2) ---------- */
+function surfacePersonToAI(pid){
+  const p = people.find(x=>x.id === pid);
+  if (!p) return;
+  let html = `<div style="font-weight:800">${p.name}</div><div class="small muted-ink" style="margin-top:6px">${p.conn}</div>`;
+  if (p.news && p.news.length){
+    html += '<div style="margin-top:8px"><strong>Latest</strong></div>';
+    p.news.slice(0,3).forEach(n => html += `<div class="small" style="margin-top:6px"><a href="${n.link}" target="_blank" style="color:var(--ink);text-decoration:none">${n.title}</a></div>`);
+  } else html += '<div class="small muted-ink" style="margin-top:6px">No recent headlines</div>';
+  html += `<div style="margin-top:8px"><button class="pill" onclick="createMissionFromPerson('${pid}')">Use in Mission</button></div>`;
   $('aiPanel').innerHTML = html;
 }
 
-/* generate a 5-step mission using selected asset + person */
-function generateMissionFromPerson(pid){
+/* ---------- generate mission (Vision 2) combining asset + person + news ---------- */
+function createMissionFromPerson(pid){
   const p = people.find(x=>x.id===pid);
-  if (!p) return toast('Person not found');
+  if (!p) return;
+  const assetSym = selected ? selected.symbol.toUpperCase() : '[no asset selected]';
   const steps = [
-    `Check ${selected ? selected.symbol.toUpperCase() : '[asset]'} 1h/24h momentum and RSI.`,
-    `Scan top headlines for ${p.name} and related topics.`,
-    `Check on-chain transfer spikes (DexS/solscan) for relevant tokens.`,
-    `Synthesize risk checklist: liquidity depth, source reliability, holder concentration.`,
-    `Prepare a simulated ladder plan or watchlist (simulated only).`
+    `1) Quick chart check: verify EMA9/21/50, RSI and MACD for ${assetSym}.`,
+    `2) Read top 2 headlines for ${p.name} and check source reliability.`,
+    `3) Run microcap / DexS liquidity quick-check on any related token.`,
+    `4) Build risk checklist: liquidity depth, holder concentration, news risk.`,
+    `5) Prepare a simulated ladder buy/watch plan (no execution).`
   ];
-  $('aiPanel').innerHTML = `<div style="font-weight:800">Mission — context: ${p.name}</div><div class="small" style="margin-top:8px">${steps.join('<br>')}</div>`;
+  $('aiPanel').innerHTML = `<div style="font-weight:800">Mission — context: ${p.name}</div><div class="small muted-ink" style="margin-top:8px">${steps.join('<br>')}</div>`;
   archive.unshift({ type:'mission', person:p.name, asset:selected?selected.symbol:'', steps, ts:Date.now() });
   $('archivePanel').textContent = `Archive entries: ${archive.length}`;
-  toast('Mission generated and archived (simulated)');
+  toast('Mission created and archived (simulated)');
 }
 
-/* Market Radar scan */
-async function runRadar(){
-  $('radarPanel').textContent = 'Scanning…';
+/* ---------- Market Radar (Vision 4) ---------- */
+async function scanMarketRadar(){
+  $('radarPanel').textContent = 'Scanning market anomalies…';
   try{
     const ids = coins.slice(0,40).map(c=>c.id).join(',');
     const url = `${COINGECKO}/coins/markets?vs_currency=usd&ids=${encodeURIComponent(ids)}&order=market_cap_desc&per_page=40&page=1&price_change_percentage=1h,24h`;
-    const res = await fetchJSONWithFallback(url);
+    const res = await safeJSONFetch(url);
     const flags = [];
     res.forEach(r => {
       const p1 = r.price_change_percentage_1h_in_currency || 0;
@@ -643,71 +791,95 @@ async function runRadar(){
       if (Math.abs(p1) > 6) flags.push(`${r.symbol.toUpperCase()} ${p1.toFixed(2)}% 1h`);
       if (Math.abs(p24) > 12) flags.push(`${r.symbol.toUpperCase()} ${p24.toFixed(2)}% 24h`);
     });
-    $('radarPanel').textContent = flags.length ? 'Anomalies: ' + flags.slice(0,6).join(', ') : 'No anomalies';
+    $('radarPanel').textContent = flags.length ? 'Anomalies: ' + flags.slice(0,6).join(', ') : 'No anomalies detected';
     archive.unshift({ type:'radar', flags, ts:Date.now() });
-    toast('Radar scan complete');
-  }catch(e){ console.warn('radar error', e); $('radarPanel').textContent = 'Radar error'; }
+    if (flags.length) toast('Radar anomalies: ' + flags.slice(0,3).join(', '), 7000);
+  }catch(e){ console.error('radar error', e); $('radarPanel').textContent = 'Radar failed'; toast('Radar error'); }
 }
 
-/* Archive search */
-function openArchive(){
-  let html = `<div style="font-weight:800">Shadow Archive (last 200)</div><div class="small" style="margin-top:8px">Recent entries:</div>`;
-  html += '<div style="max-height:420px;overflow:auto;margin-top:8px">';
-  archive.slice(0,200).forEach((a,i) => { html += `<div class="small" style="margin-top:6px">${new Date(a.ts).toLocaleString()} • ${a.type} • ${a.text || (a.flags? a.flags.join(', '): (a.steps? a.steps.join('; '):''))}</div>`; });
+/* ---------- Archive display (Vision 3) ---------- */
+function openArchivePanel(){
+  let html = `<div style="font-weight:800">Shadow Archive (latest)</div><div class="small muted-ink" style="margin-top:8px">Entries: ${archive.length}</div><div style="max-height:420px;overflow:auto;margin-top:8px">`;
+  for (let i=0;i<Math.min(500, archive.length); i++){
+    const a = archive[i];
+    const summary = a.text || (a.flags ? a.flags.join(', ') : (a.steps ? a.steps.join('; ') : ''));
+    html += `<div class="small" style="margin-top:6px">${new Date(a.ts).toLocaleString()} — ${a.type} — ${summary}</div>`;
+  }
   html += '</div>';
   $('archivePanel').innerHTML = html;
 }
 
-/* news fetch helper: returns text or null (direct -> proxy fallback) */
-async function fetchTextWithFallback(url){
-  try{
-    const r = await fetch(url);
-    if (r.ok) return await r.text();
-    // try allorigins
-    try{ const rp = await fetch(PROXY + encodeURIComponent(url)); if (rp.ok) return await rp.text(); }catch(e){ console.warn('proxy1 fail', e); }
-    try{ const ra = await fetch(ALT_PROXY + encodeURIComponent(url)); if (ra.ok) return await ra.text(); }catch(e){ console.warn('proxy2 fail', e); }
-    return null;
-  }catch(e){ console.warn('fetchTextWithFallback general', e); return null; }
-}
-
-/* utilities */
-function formatMcap(n){ if(!n) return '-'; if(n>1e12) return (n/1e12).toFixed(2)+'T'; if(n>1e9) return (n/1e9).toFixed(2)+'B'; if(n>1e6) return (n/1e6).toFixed(2)+'M'; return '$'+Number(n).toFixed(0); }
-function formatMoney(n){ if(n===undefined||n===null) return '-'; if(n>1e9) return '$'+(n/1e9).toFixed(2)+'B'; if(n>1e6) return '$'+(n/1e6).toFixed(2)+'M'; if(n>1e3) return '$'+(n/1e3).toFixed(2)+'k'; return '$'+Number(n).toFixed(2); }
-
-/* event bindings and bootstrap */
-$('btnRefresh').addEventListener('click', ()=> loadTopCoins());
-$('btnLoadPeople').addEventListener('click', ()=> { buildPeopleList(); toast('People loading'); });
-$('btnScanRadar').addEventListener('click', ()=> runRadar());
-$('btnOpenArchive').addEventListener('click', ()=> openArchive());
-$('btnCheckWallet').addEventListener('click', ()=> checkSolanaWallet(SOLANA_WALLET));
-$('btnRunMission').addEventListener('click', ()=> { if (!selected) return toast('Select an asset or person'); toast('Mission run (simulated)'); });
-
-async function checkSolanaWallet(addr){
+/* ---------- Wallet read-only check (solscan as best-effort) ---------- */
+async function checkWallet(addr){
   try{
     const url = `https://public-api.solscan.io/account/tokens?address=${addr}`;
-    const r = await fetch(url);
-    if (r.ok){ const j = await r.json(); displayWallet(j); toast('Wallet loaded'); return; }
+    const res = await fetch(url);
+    if (res.ok){
+      const j = await res.json();
+      showWallet(j);
+      toast('Wallet loaded (solscan)');
+      return;
+    }
     // try proxy
-    const rp = await fetch(PROXY + encodeURIComponent(url));
-    if (rp.ok){ const j2 = await rp.json(); displayWallet(j2); toast('Wallet loaded via proxy'); return; }
-    toast('Solana wallet fetch blocked by CORS');
-  }catch(e){ console.warn('sol wallet err', e); toast('Wallet error'); }
+    try{
+      const rp = await fetch(PROXY + encodeURIComponent(url));
+      if (rp.ok){
+        const j2 = await rp.json();
+        showWallet(j2);
+        toast('Wallet via proxy loaded');
+        return;
+      }
+    }catch(e){}
+    toast('Wallet fetch blocked by CORS');
+  }catch(e){ console.warn('wallet error', e); toast('Wallet error'); }
 }
-function displayWallet(tokens){ const left = $('left'); const block = document.createElement('div'); block.className='module'; block.innerHTML='<div style="font-weight:700">Wallet snapshot</div>'; if (!tokens||tokens.length===0) block.innerHTML+='<div class="small">No tokens or blocked</div>'; else tokens.slice(0,8).forEach(t=> block.innerHTML += `<div class="small">${t.tokenSymbol||t.tokenName} • ${(t.uiAmountString||t.amount||'-')}</div>`); left.appendChild(block); }
+function showWallet(tokens){
+  const left = $('left');
+  const block = document.createElement('div'); block.className = 'module';
+  block.innerHTML = '<div style="font-weight:700">Wallet snapshot</div>';
+  if (!tokens || tokens.length === 0) block.innerHTML += '<div class="small muted-ink">No tokens or blocked</div>';
+  else tokens.slice(0,8).forEach(t => block.innerHTML += `<div class="small">${t.tokenSymbol || t.tokenName} • ${(t.uiAmountString || t.amount || '-')}</div>`);
+  left.appendChild(block);
+}
 
-/* bootstrap */
-(async function init(){
-  toast('Initializing — give it 30–90s for people/news to fill in');
+/* ---------- Utility formatting ---------- */
+function formatMcap(n){ if(!n) return '-'; if(n>1e12) return (n/1e12).toFixed(2)+'T'; if(n>1e9) return (n/1e9).toFixed(2)+'B'; if(n>1e6) return (n/1e6).toFixed(2)+'M'; return '$'+Number(n).toFixed(0); }
+function formatPrice(n){ if(n===null||n===undefined) return '-'; if(n>1e9) return '$'+(n/1e9).toFixed(2)+'B'; if(n>1e6) return '$'+(n/1e6).toFixed(2)+'M'; if(n>1e3) return '$'+(n/1e3).toFixed(2)+'k'; return '$'+Number(n).toFixed(4); }
+
+/* ---------- Safe wrappers that respect proxy fallbacks ---------- */
+async function safeJSONFetch(url){
+  try{ return await fetchWithFallback(url, true); }catch(e){ console.warn('safeJSONFetch fail', url, e); throw e; }
+}
+async function safeTextFetch(url){
+  try{ return await fetchWithFallback(url, false); }catch(e){ console.warn('safeTextFetch fail', url, e); return null; }
+}
+
+/* ---------- Event bindings ---------- */
+$('btnRefresh').addEventListener('click', ()=> loadTopCoins());
+$('btnLoadPeople').addEventListener('click', ()=> { buildPeopleAlwaysVisible(); toast('Loading people (progressive)'); });
+$('btnScanRadar').addEventListener('click', ()=> scanMarketRadar());
+$('btnOpenArchive').addEventListener('click', ()=> openArchivePanel());
+$('btnCheckWallet').addEventListener('click', ()=> checkWallet(SOLANA_WALLET));
+$('btnRunMission').addEventListener('click', ()=> { if (!selected) return toast('Select asset or person'); toast('Mission executed (simulated)'); });
+
+/* ---------- Boot sequence ---------- */
+(async function boot(){
+  toast('Initializing Five-Vision dashboard — progressive loads starting');
   await loadTopCoins();
-  buildPeopleList(); // auto-start people
-  // periodic rule evaluation (simulated)
-  setInterval(()=> { /* run rules (simulated) */ }, 30_000);
+  buildPeopleAlwaysVisible();
+  // auto-scan radar on startup (best-effort)
+  setTimeout(()=> scanMarketRadar(), 2500);
+  // periodic background tasks
+  setInterval(()=> { if (selected) loadAndRenderChart(selected.id, parseInt($('tfSelector').value)); }, 1000 * 60 * 5); // refresh every 5 minutes
 })();
 
-/* expose for debugging */
-window.__fv = { coins, people, archive, selectAsset };
-
+/* ---------- Expose small debug API to console ---------- */
+window.__FiveVision = {
+  coins, people, archive, selectAsset: onAssetClicked, createMissionFromPerson, buildPeopleAlwaysVisible
+};
 </script>
+
 </body>
 </html>
+
 
