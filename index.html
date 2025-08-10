@@ -3,98 +3,77 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Five-Vision Intelligence — Cloudy UI • Candles + Indicators</title>
-
-<!-- Inter font for clean UI -->
+<title>Five-Vision Intelligence — Fixed (Charts / News / Visions)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-
 <style>
-  :root{
-    --cloud-1: #f3f5f7;
-    --cloud-2: #eef2f6;
-    --panel: rgba(255,255,255,0.9);
-    --muted: #6b7280;
-    --ink: #0b1220;
-    --accent: #0ea5e9;
-    --glass-border: rgba(11,17,25,0.04);
-    --card-shadow: 0 8px 30px rgba(12,18,32,0.06);
-  }
-  html,body{height:100%;margin:0;background:linear-gradient(180deg,var(--cloud-1) 0%, var(--cloud-2) 100%);font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:var(--ink);overflow:hidden}
-  /* Layout: left, center, right */
-  #left { position:absolute; left:18px; top:18px; width:380px; bottom:18px; padding:16px; border-radius:12px; background:var(--panel); border:1px solid var(--glass-border); box-shadow:var(--card-shadow); overflow:auto; }
-  #right { position:absolute; right:18px; top:18px; width:420px; bottom:18px; padding:16px; border-radius:12px; background:var(--panel); border:1px solid var(--glass-border); box-shadow:var(--card-shadow); overflow:auto; }
-  #center { position:absolute; left:420px; right:460px; top:18px; bottom:18px; border-radius:14px; overflow:hidden; display:flex; flex-direction:column; background:linear-gradient(180deg, rgba(255,255,255,0.92), rgba(250,251,253,0.96)); border:1px solid rgba(11,17,25,0.02); box-shadow:var(--card-shadow); }
-
-  h1 { margin:0; font-weight:800; font-size:18px; color:var(--ink); }
-  .small { font-size:13px; color:var(--muted); }
-  .module { margin-top:12px; padding:10px; border-radius:10px; background:transparent; border:1px solid rgba(11,17,25,0.02); }
-
-  .pill { background:transparent; padding:8px 10px; border-radius:10px; border:1px solid rgba(11,17,25,0.04); cursor:pointer; font-weight:700; color:var(--ink); }
-
-  /* Transparent scrollbar with slight thumb on hover */
-  *::-webkit-scrollbar { width:10px; height:10px; }
-  *::-webkit-scrollbar-track { background:transparent; }
-  *::-webkit-scrollbar-thumb { background:transparent; border-radius:10px; border:2px solid transparent; }
-  *:hover::-webkit-scrollbar-thumb { background: rgba(11,17,25,0.06); }
-
-  /* Assets list */
-  .asset-row { display:flex; align-items:center; justify-content:space-between; padding:8px; border-radius:10px; margin-bottom:8px; transition:all 140ms ease; }
-  .asset-row:hover { background: rgba(14,165,233,0.04); cursor:pointer; }
-  .asset-left { display:flex; align-items:center; gap:12px; }
-  .asset-logo { width:44px; height:44px; border-radius:9px; background:#fff; overflow:hidden; display:flex; align-items:center; justify-content:center; border:1px solid rgba(11,17,25,0.03); }
-  .asset-meta { display:flex; flex-direction:column; }
-  .asset-name { font-weight:700; color:var(--ink); }
-  .asset-sub { font-size:12px; color:var(--muted); }
-
-  /* center chart header */
-  #chartHeader { display:flex; justify-content:space-between; align-items:center; padding:14px 16px; border-bottom:1px solid rgba(11,17,25,0.02); }
-  #chartArea { flex:1; display:flex; flex-direction:column; padding:12px; gap:8px; }
-  #chartBox { flex:1; border-radius:12px; background:#fff; border:1px solid rgba(11,17,25,0.02); overflow:hidden; display:flex; flex-direction:column; }
-  .chart-canvas { width:100%; height:100%; display:block; }
-
-  /* small indicator panels */
-  .indicator-panel { height:120px; border-top:1px solid rgba(11,17,25,0.02); display:flex; gap:8px; padding:8px; align-items:center; }
-
-  /* right side news / people layout */
-  .floating-news { display:flex; gap:12px; align-items:center; padding:10px; border-radius:12px; margin-bottom:10px; background:#fff; border:1px solid rgba(11,17,25,0.02); }
-  .news-thumb { width:140px; height:84px; object-fit:cover; border-radius:8px; }
-  .person-card { display:flex; gap:12px; padding:10px; border-radius:12px; margin-bottom:10px; background:linear-gradient(180deg,#fff,#fbfdff); border:1px solid rgba(11,17,25,0.02); }
-  .person-thumb { width:64px; height:64px; border-radius:10px; overflow:hidden; background:#eef2f6; flex-shrink:0; display:flex; align-items:center; justify-content:center; }
-
-  /* DITIMPA callouts anchored to top-left area of chart */
-  .callout { position:absolute; left:440px; top:42px; z-index:999; display:flex; flex-direction:column; gap:8px; pointer-events:none; }
-  .callout-item { background:linear-gradient(180deg,#ffffff,#f5fbff); padding:8px 10px; border-radius:10px; border:1px solid rgba(11,17,25,0.04); box-shadow:0 8px 30px rgba(12,18,32,0.06); font-weight:700; color:var(--ink); }
-
-  /* toast */
-  #toast { position:fixed; left:50%; transform:translateX(-50%); bottom:22px; z-index:10000; background:var(--ink); color:#fff; padding:10px 14px; border-radius:10px; display:none; }
+:root{
+  --bg1:#eef4f8;
+  --bg2:#f7fbfd;
+  --panel:#ffffffcc;
+  --muted:#546070;
+  --ink:#0b1220;
+  --accent:#0ea5e9;
+  --glass-border: rgba(11,17,25,0.04);
+  --card-shadow: 0 10px 30px rgba(12,18,32,0.06);
+}
+html,body{height:100%;margin:0;background:linear-gradient(120deg,var(--bg1),var(--bg2));font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:var(--ink);overflow:hidden}
+@keyframes slow-cloud { 0%{background-position:0% 50%} 50%{background-position:100% 50%} 100%{background-position:0% 50%} }
+body::before{ content:""; position:fixed; inset:0; pointer-events:none; background:linear-gradient(120deg, rgba(255,255,255,0.3), rgba(240,248,255,0.2)); filter:blur(40px) saturate(100%); opacity:0.85; animation:slow-cloud 28s linear infinite; mix-blend-mode:soft-light }
+#left{position:absolute;left:18px;top:18px;width:380px;bottom:18px;padding:16px;border-radius:12px;background:var(--panel);border:1px solid var(--glass-border);box-shadow:var(--card-shadow);overflow:auto}
+#center{position:absolute;left:420px;right:460px;top:18px;bottom:18px;border-radius:14px;background:transparent;display:flex;flex-direction:column;overflow:hidden}
+#right{position:absolute;right:18px;top:18px;width:420px;bottom:18px;padding:16px;border-radius:12px;background:var(--panel);border:1px solid var(--glass-border);box-shadow:var(--card-shadow);overflow:auto}
+h1{margin:0;font-weight:800;font-size:18px}
+.small{font-size:13px;color:var(--muted)}
+.module{margin-top:12px;padding:10px;border-radius:10px;background:transparent;border:1px solid rgba(11,17,25,0.02)}
+.pill{background:transparent;padding:8px 10px;border-radius:10px;border:1px solid rgba(11,17,25,0.04);cursor:pointer;font-weight:700;color:var(--ink)}
+*::-webkit-scrollbar{width:10px;height:10px}*::-webkit-scrollbar-track{background:transparent}*::-webkit-scrollbar-thumb{background:transparent;border-radius:10px}
+*:hover::-webkit-scrollbar-thumb{background:rgba(11,17,25,0.06)}
+.asset-row{display:flex;align-items:center;justify-content:space-between;padding:8px;border-radius:10px;margin-bottom:8px;transition:all 140ms ease}
+.asset-row:hover{background:rgba(14,165,233,0.03);cursor:pointer}
+.asset-left{display:flex;align-items:center;gap:12px}
+.asset-logo{width:44px;height:44px;border-radius:9px;background:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid rgba(11,17,25,0.03)}
+.asset-meta{display:flex;flex-direction:column}
+.asset-name{font-weight:700}
+.asset-sub{font-size:12px;color:var(--muted)}
+#chartHeader{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(11,17,25,0.02)}
+#chartArea{flex:1;padding:12px;display:flex;flex-direction:column;gap:8px}
+#chartBox{flex:1;border-radius:12px;background:linear-gradient(180deg,#ffffff,#fbfdff);border:1px solid rgba(11,17,25,0.02);display:flex;flex-direction:column;overflow:hidden;position:relative}
+.chart-canvas{width:100%;height:100%;display:block}
+.indicator-panel{height:120px;border-top:1px solid rgba(11,17,25,0.02);display:flex;gap:8px;padding:8px;align-items:center}
+.floating-news{display:flex;gap:12px;align-items:center;padding:10px;border-radius:12px;margin-bottom:10px;background:#fff;border:1px solid rgba(11,17,25,0.02)}
+.news-thumb{width:120px;height:70px;border-radius:8px;object-fit:cover}
+.person-card{display:flex;gap:12px;padding:10px;border-radius:12px;margin-bottom:10px;background:linear-gradient(180deg,#fff,#fbfdff);border:1px solid rgba(11,17,25,0.02)}
+.person-thumb{width:64px;height:64px;border-radius:10px;overflow:hidden;background:#eef2f6;display:flex;align-items:center;justify-content:center}
+.callout{position:absolute;left:24px;top:24px;z-index:999;display:flex;flex-direction:column;gap:8px;pointer-events:none}
+.callout-item{background:linear-gradient(180deg,#ffffff,#f1fbff);padding:8px 10px;border-radius:10px;border:1px solid rgba(11,17,25,0.04);box-shadow:0 8px 30px rgba(12,18,32,0.06);font-weight:700;color:var(--ink)}
+#toast{position:fixed;left:50%;transform:translateX(-50%);bottom:22px;z-index:10000;background:var(--ink);color:#fff;padding:10px 14px;border-radius:10px;display:none}
 </style>
 </head>
 <body>
-  <!-- LEFT column -->
   <div id="left">
     <h1>Five-Vision Intelligence</h1>
-    <div class="small">Soft-cloud UI • 100 cryptos • 200 people • Candles + EMA/RSI/MACD/BB/ATR • Autonomous rules (client-only)</div>
+    <div class="small">Soft-cloud UI • top 100 crypto • 200 people (no bios) • real-time-ish (public proxies)</div>
 
     <div class="module">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 1 — Real-Time Intelligence</strong><div class="small">Top 100 by market cap • click to inspect</div></div>
+        <div><strong>Vision 1 — Real-Time Intelligence</strong><div class="small">Top 100 • click to inspect</div></div>
         <div><button id="btnRefresh" class="pill">Refresh</button></div>
       </div>
       <div id="marketStatus" class="small" style="margin-top:8px">Loading top 100…</div>
-      <div id="assetsContainer" style="margin-top:10px; max-height:420px; overflow:auto"></div>
+      <div id="assetsList" style="margin-top:10px;max-height:420px;overflow:auto"></div>
     </div>
 
     <div class="module">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 2 — AI Command Center</strong><div class="small">Mission-mode & tactical plans (select an asset)</div></div>
+        <div><strong>Vision 2 — AI Command Center</strong><div class="small">Mission mode (select asset/person)</div></div>
         <div><button id="btnRunMission" class="pill" disabled>Run</button></div>
       </div>
-      <div id="aiCommandPanel" class="small" style="margin-top:8px">Locked — select an asset</div>
+      <div id="aiPanel" class="small" style="margin-top:8px">Locked — select an asset or person</div>
     </div>
 
     <div class="module">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 3 — Shadow Archive</strong><div class="small">Search triggers, signals, mission history</div></div>
+        <div><strong>Vision 3 — Shadow Archive</strong><div class="small">Search signals & missions</div></div>
         <div><button id="btnOpenArchive" class="pill">Open</button></div>
       </div>
       <div id="archivePanel" class="small" style="margin-top:8px">No entries yet</div>
@@ -102,7 +81,7 @@
 
     <div class="module">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 4 — Market Radar</strong><div class="small">Anomaly detection / DexS hints</div></div>
+        <div><strong>Vision 4 — Market Radar</strong><div class="small">Anomalies & DexS hints</div></div>
         <div><button id="btnScanRadar" class="pill">Scan</button></div>
       </div>
       <div id="radarPanel" class="small" style="margin-top:8px">Idle</div>
@@ -110,187 +89,180 @@
 
     <div class="module">
       <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 5 — Human Network</strong><div class="small">200 people • connections + latest 2 headlines</div></div>
+        <div><strong>Vision 5 — Human Network</strong><div class="small">200 people — click to surface</div></div>
         <div><button id="btnLoadPeople" class="pill">Load People</button></div>
       </div>
-      <div id="peopleStatus" class="small" style="margin-top:8px">People not loaded</div>
-      <div id="peopleListPreview" style="margin-top:10px; max-height:220px; overflow:auto"></div>
+      <div id="peoplePreview" class="small" style="margin-top:8px">People not loaded</div>
     </div>
 
     <div style="margin-top:12px" class="small">Solana (read-only): <strong id="solAddr">J6ePpCwsAffaDE2tPfuG6k1xwqsSDr7kbs1DK8iaUbCp</strong></div>
     <div style="margin-top:6px"><button id="btnCheckWallet" class="pill">Check Wallet</button></div>
-
   </div>
 
-  <!-- CENTER chart area -->
   <div id="center">
     <div id="chartHeader">
       <div>
         <div id="chartTitle" style="font-weight:800">No asset selected</div>
-        <div id="chartSubtitle" class="small">Click a crypto on the left to load candles and indicators</div>
+        <div id="chartSubtitle" class="small">Click a coin to load candles, indicators and DITIMPA callouts</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <select id="tfSelector" class="pill">
-          <option value="1">1D</option>
-          <option value="7">7D</option>
-          <option value="30" selected>30D</option>
-        </select>
-        <select id="chartMode" class="pill">
-          <option value="candles" selected>Candles</option>
-          <option value="line">Line</option>
-        </select>
+        <select id="tfSelect" class="pill"><option value="1">1D</option><option value="7">7D</option><option value="30" selected>30D</option></select>
+        <select id="chartMode" class="pill"><option value="candles" selected>Candles</option><option value="line">Line</option></select>
         <button id="btnToggleIndicators" class="pill">Toggle Indicators</button>
       </div>
     </div>
 
     <div id="chartArea">
-      <div id="chartBox" style="position:relative">
-        <!-- DITIMPA callouts container -->
+      <div id="chartBox">
         <div id="callouts" class="callout"></div>
-
-        <!-- main candlestick canvas -->
+        <!-- main canvas (single id used consistently) -->
         <canvas id="canvasMain" class="chart-canvas"></canvas>
-
-        <!-- RSI panel -->
-        <div id="rsiPanel" class="indicator-panel" style="height:120px;">
-          <canvas id="canvasRsi" style="width:100%;height:100%"></canvas>
-        </div>
-
-        <!-- MACD panel -->
-        <div id="macdPanel" class="indicator-panel" style="height:120px;">
-          <canvas id="canvasMacd" style="width:100%;height:100%"></canvas>
-        </div>
-
+        <!-- RSI -->
+        <div id="rsiPanel" class="indicator-panel"><canvas id="canvasRsi" style="width:100%;height:100%"></canvas></div>
+        <!-- MACD -->
+        <div id="macdPanel" class="indicator-panel"><canvas id="canvasMacd" style="width:100%;height:100%"></canvas></div>
       </div>
     </div>
   </div>
 
-  <!-- RIGHT: asset details, news, people full -->
   <div id="right">
     <div id="assetDetail" style="display:none">
       <div style="display:flex;gap:12px;align-items:center">
-        <div style="width:96px;height:96px;border-radius:12px;overflow:hidden;background:#f3f5f7"><img id="assetLogo" src="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>
-        <div>
-          <div id="assetName" style="font-weight:800;font-size:18px">—</div>
-          <div id="assetMeta" class="small">—</div>
-        </div>
+        <div style="width:96px;height:96px;border-radius:12px;overflow:hidden;background:#f3f5f7"><img id="assetLogo" src="" style="width:100%;height:100%;object-fit:cover"></div>
+        <div><div id="assetName" style="font-weight:800;font-size:18px">—</div><div id="assetMeta" class="small">—</div></div>
       </div>
-
       <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
         <div class="pill" id="detailPrice">Price: —</div>
         <div class="pill" id="detailMcap">Market Cap: —</div>
         <div class="pill" id="detail24h">24h: —</div>
-        <div class="pill" id="detailVol">Vol: —</div>
       </div>
-
       <div style="margin-top:12px"><strong>Latest News (24h)</strong></div>
-      <div id="newsContainer" style="margin-top:8px; max-height:420px; overflow:auto"></div>
+      <div id="newsList" style="margin-top:8px;max-height:420px;overflow:auto"></div>
     </div>
 
     <div id="peopleFull" style="margin-top:8px">
       <div style="font-weight:800">People (200)</div>
-      <div id="peopleScroll" style="margin-top:8px; max-height:700px; overflow:auto"></div>
+      <div id="peopleScroll" style="margin-top:8px;max-height:700px;overflow:auto"></div>
     </div>
   </div>
 
   <div id="toast"></div>
 
-  <!-- Libraries -->
+  <!-- libs -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@3.3.0/dist/chartjs-chart-financial.min.js"></script>
   <script src="https://unpkg.com/technicalindicators@3.0.3/dist/browser.js"></script>
 
 <script>
-/* ================================================================
-   Big single-file dashboard
-   - uses CoinGecko + proxy fallbacks
-   - shows top100, 200 people (no bio), candlestick chart + EMA/BB/ATR/RSI/MACD
-   - DITIMPA callouts, Vision 2-5 implemented
-   - everything runs client-side; progressive loading; caching
-   ================================================================= */
+/* ---------- Robust single-file dashboard fixes ----------
+   - Ensures Chart destruction before reuse
+   - Robust RSS / news fetching with proxy fallback (allorigins)
+   - Vision 2-5 implemented functionally (not placeholders)
+   - Progressive people enrichment and clickable surface into AI panel
+   - DITIMPA callouts placed and archived
+   ------------------------------------------------------- */
 
 const COINGECKO = 'https://api.coingecko.com/api/v3';
-const PROXY = 'https://api.allorigins.win/raw?url=';
+const PROXY = 'https://api.allorigins.win/raw?url='; // primary public proxy
+const ALT_PROXY = 'https://api.codetabs.com/v1/proxy?quest='; // alt fallback (best-effort)
 const MAX_COINS = 100;
 const PEOPLE_COUNT = 200;
 const SOLANA_WALLET = document.getElementById('solAddr').textContent.trim();
 
-/* ---------------- state ---------------- */
 let coins = [], coinMap = {};
 let selected = null;
 let people = [];
 let archive = [];
 let rules = [];
-let chartMain = null, chartRsi = null, chartMacd = null;
-let indicatorsVisible = true;
+let mainChart = null, rsiChart = null, macdChart = null;
 
-/* ---------------- utilities ---------------- */
+/* helpers */
 const $ = id => document.getElementById(id);
-function toast(msg, time=5000){ const t=$('toast'); t.textContent=msg; t.style.display='block'; clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none', time); console.log('[TOAST]', msg); }
-function cacheSet(k,v,ttl=60000){ localStorage.setItem('cache_'+k, JSON.stringify({v:v, exp:Date.now()+ttl})); }
-function cacheGet(k){ try{ const s=localStorage.getItem('cache_'+k); if(!s) return null; const o=JSON.parse(s); if(Date.now()>o.exp){ localStorage.removeItem('cache_'+k); return null;} return o.v;}catch(e){return null;} }
+function toast(msg, t=5000){ const el=$('toast'); el.textContent=msg; el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none', t); console.log('[toast]', msg); }
+function cacheSet(k,v,ttl=60000){ localStorage.setItem('cache_'+k, JSON.stringify({v:v,exp:Date.now()+ttl})); }
+function cacheGet(k){ try{ const s=localStorage.getItem('cache_'+k); if(!s) return null; const o=JSON.parse(s); if(Date.now()>o.exp){ localStorage.removeItem('cache_'+k); return null; } return o.v; }catch(e){ return null;} }
 
-/* ---------------- safe fetches (JSON/text) ---------------- */
-async function safeJSON(url){
+/* robust fetch JSON/text with direct -> proxy fallbacks */
+async function fetchJSONWithFallback(url){
   try{
     const r = await fetch(url);
     if (r.ok) return await r.json();
-    // fallback proxy
-    const rp = await fetch(PROXY + encodeURIComponent(url));
-    if (rp.ok) return await rp.json();
-    throw new Error('fetch failed: ' + r.status);
-  }catch(e){ console.warn('safeJSON fail', url, e); throw e; }
+    console.warn('direct fetch fail', url, r.status);
+    // try primary proxy
+    try{
+      const rp = await fetch(PROXY + encodeURIComponent(url));
+      if (rp.ok) return await rp.json();
+    }catch(e){ console.warn('proxy fail 1', e); }
+    // try alt proxy
+    try{
+      const ra = await fetch(ALT_PROXY + encodeURIComponent(url));
+      if (ra.ok) return await ra.json();
+    }catch(e){ console.warn('proxy fail 2', e); }
+    throw new Error('All fetch attempts failed for JSON');
+  }catch(e){
+    console.warn('fetchJSONWithFallback error', e);
+    throw e;
+  }
 }
-async function safeText(url){
+async function fetchTextWithFallback(url){
   try{
     const r = await fetch(url);
     if (r.ok) return await r.text();
-    const rp = await fetch(PROXY + encodeURIComponent(url));
-    if (rp.ok) return await rp.text();
-    throw new Error('fetch text failed');
-  }catch(e){ console.warn('safeText fail', url, e); return null; }
+    // proxy fallback
+    try{
+      const rp = await fetch(PROXY + encodeURIComponent(url));
+      if (rp.ok) return await rp.text();
+    }catch(e){ console.warn('text proxy1 fail', e); }
+    try{
+      const ra = await fetch(ALT_PROXY + encodeURIComponent(url));
+      if (ra.ok) return await ra.text();
+    }catch(e){ console.warn('text proxy2 fail', e); }
+    return null;
+  }catch(e){ console.warn('fetchTextWithFallback', e); return null; }
 }
 
-/* ---------------- load top 100 ---------------- */
+/* ---------------- load top coins ---------------- */
 async function loadTopCoins(){
   $('marketStatus').textContent = 'Loading top ' + MAX_COINS + '...';
-  const cached = cacheGet('top100_v1');
-  if (cached){ coins = cached; buildAssetsUI(); setTimeout(()=> fetchTopCoins(true), 800); return; }
+  const cached = cacheGet('top100_v4');
+  if (cached){ coins = cached; buildAssets(); setTimeout(()=> fetchTopCoins(true), 1200); return; }
   await fetchTopCoins(false);
 }
 async function fetchTopCoins(silent=false){
   try{
-    let page=1, per=250, collected=[];
+    let collected=[];
+    let page=1, per=250;
     while (collected.length < MAX_COINS){
-      const url = `${COINGECKO}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${per}&page=${page}&price_change_percentage=24h`;
-      const res = await safeJSON(url);
+      const url = `${COINGECKO}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${per}&page=${page}&price_change_percentage=24h,1h`;
+      const res = await fetchJSONWithFallback(url);
       if (!Array.isArray(res) || res.length===0) break;
       collected = collected.concat(res);
-      page++; await new Promise(r=>setTimeout(r,160)); // polite
+      page++;
+      await new Promise(r=>setTimeout(r,160));
     }
-    coins = collected.slice(0,MAX_COINS).map(c => ({ id:c.id, symbol:(c.symbol||'').toLowerCase(), name:c.name, image:c.image, price:c.current_price, mcap:c.market_cap, change24:c.price_change_percentage_24h }));
+    coins = collected.slice(0,MAX_COINS).map(c => ({ id:c.id, symbol:(c.symbol||'').toLowerCase(), name:c.name, image:c.image, price:c.current_price, mcap:c.market_cap, change24:c.price_change_percentage_24h, change1h:c.price_change_percentage_1h_in_currency }));
     coinMap = {}; coins.forEach(c => coinMap[c.symbol] = c);
-    cacheSet('top100_v1', coins, 90_000);
-    buildAssetsUI();
+    cacheSet('top100_v4', coins, 90_000);
+    buildAssets();
     if (!silent) toast('Top 100 loaded');
-  }catch(e){ console.error(e); toast('Failed loading coins: ' + (e.message||e)); $('marketStatus').textContent = 'Failed to load top coins'; }
+  }catch(e){ console.error(e); toast('Failed loading top coins: ' + (e.message||e)); $('marketStatus').textContent = 'Failed to load top coins'; }
 }
-function buildAssetsUI(){
-  const container = $('assetsContainer'); container.innerHTML = '';
+function buildAssets(){
+  const node = $('assetsList'); node.innerHTML = '';
   coins.forEach((c,i)=>{
-    const row = document.createElement('div'); row.className = 'asset-row';
-    row.innerHTML = `<div class="asset-left"><div class="asset-logo"><img src="${c.image||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div><div class="asset-meta"><div class="asset-name">${c.symbol.toUpperCase()} • ${c.name}</div><div class="asset-sub">${formatMcap(c.mcap)} • 24h: ${c.change24?c.change24.toFixed(2)+'%':'-'}</div></div></div><div class="badge">#${i+1}</div>`;
-    row.addEventListener('click', ()=> selectAsset(c.symbol));
-    container.appendChild(row);
+    const r = document.createElement('div'); r.className='asset-row';
+    r.innerHTML = `<div class="asset-left"><div class="asset-logo"><img src="${c.image||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div><div class="asset-meta"><div class="asset-name">${c.symbol.toUpperCase()} • ${c.name}</div><div class="asset-sub">${formatMcap(c.mcap)} • 24h: ${c.change24?c.change24.toFixed(2)+'%':'-'}</div></div></div><div class="badge">#${i+1}</div>`;
+    r.addEventListener('click', ()=> selectAsset(c.symbol));
+    node.appendChild(r);
   });
   $('marketStatus').textContent = `Top ${coins.length} • click an asset`;
 }
 
-/* ---------------- select asset: load chart indicators + news ---------------- */
+/* ---------------- select asset and load candles+news ---------------- */
 async function selectAsset(symbol){
   const s = (symbol||'').toLowerCase();
   const coin = coinMap[s];
-  if (!coin) return toast('Coin not found: ' + symbol);
+  if (!coin) return toast('Coin not available: ' + symbol);
   selected = coin;
   $('chartTitle').textContent = `${coin.symbol.toUpperCase()} • ${coin.name}`;
   $('chartSubtitle').textContent = `${formatMoney(coin.price)} • ${formatMcap(coin.mcap)}`;
@@ -302,52 +274,99 @@ async function selectAsset(symbol){
   $('detailMcap').textContent = 'Market Cap: ' + formatMcap(coin.mcap);
   $('detail24h').textContent = '24h: ' + (coin.change24? coin.change24.toFixed(2)+'%':'-');
   // load candles and indicators
-  await loadCandlesAndIndicators(coin.id, parseInt($('tfSelector').value));
-  // news
-  fetchNewsForAsset(coin);
+  await loadCandlesRobust(coin.id, parseInt($('tfSelect').value));
+  // fetch news (3 items last 24h)
+  await loadNewsForAsset(coin);
 }
 
-/* ---------------- load candles robustly (ohlc -> market_chart -> proxy) ---------------- */
-async function loadCandlesAndIndicators(coinId, days){
+/* ---------------- robust candle load and render ---------------- */
+async function loadCandlesRobust(coinId, days){
   try{
-    // try ohlc (CoinGecko support for certain day values)
-    const allowed = [1,7,14,30,90,180,365,'max'];
-    let dval = allowed.includes(days) ? days : (days<=7?7: (days<=14?14:30));
-    const ohlcUrl = `${COINGECKO}/coins/${encodeURIComponent(coinId)}/ohlc?vs_currency=usd&days=${dval}`;
-    try{
-      const ohlc = await safeJSON(ohlcUrl);
-      if (Array.isArray(ohlc) && ohlc.length){
-        const ds = ohlc.map(i => ({ x: new Date(i[0]), o: i[1], h: i[2], l: i[3], c: i[4] }));
-        renderMainChart(ds);
-        const closes = ds.map(d => d.c);
-        computeAllIndicators(closes, ds.map(d=>d.x.getTime()));
-        return;
-      }
-    }catch(e){ console.warn('ohlc fail', e); }
-    // fallback market_chart
-    const mcUrl = `${COINGECKO}/coins/${encodeURIComponent(coinId)}/market_chart?vs_currency=usd&days=${days}&interval=hourly`;
-    const mc = await safeJSON(mcUrl);
-    if (mc && Array.isArray(mc.prices) && mc.prices.length){
-      // build OHLC grouped per hour
-      const ohlc = buildOHLCFromPrices(mc.prices, 1);
-      renderMainChart(ohlc);
-      computeAllIndicators(mc.prices.map(p=>p[1]), mc.prices.map(p=>p[0]));
+    // ensure any existing chart is destroyed before using same canvas
+    destroyAllCharts();
+
+    // try ohlc first (supported for some day values)
+    const ohlcDays = [1,7,14,30,90,180,365].includes(days)? days : (days<=7?7:30);
+    const ohlcUrl = `${COINGECKO}/coins/${encodeURIComponent(coinId)}/ohlc?vs_currency=usd&days=${ohlcDays}`;
+    let ohlc = null;
+    try { ohlc = await fetchJSONWithFallback(ohlcUrl); } catch(e){ console.warn('ohlc failed', e); }
+    if (Array.isArray(ohlc) && ohlc.length){
+      const ds = ohlc.map(i => ({x:new Date(i[0]), o:i[1], h:i[2], l:i[3], c:i[4]}));
+      renderCandles(ds);
+      const closes = ds.map(d=>d.c);
+      computeIndicatorsAndUI(closes, ds.map(d=>d.x.getTime()));
       return;
     }
-    // final fallback: single point
-    renderMainChart([{x:new Date(), o:selected.price, h:selected.price, l:selected.price, c:selected.price}]);
-    computeAllIndicators([selected.price], [Date.now()]);
-  }catch(e){ console.error('loadCandlesAndIndicators', e); toast('Chart load error: ' + e.message, 8000); }
+    // fallback market_chart
+    const mcUrl = `${COINGECKO}/coins/${encodeURIComponent(coinId)}/market_chart?vs_currency=usd&days=${days}&interval=hourly`;
+    const mc = await fetchJSONWithFallback(mcUrl);
+    if (mc && Array.isArray(mc.prices) && mc.prices.length){
+      // produce ohlc grouped hourly
+      const ohlcBuilt = buildOHLCFromPrices(mc.prices, 1);
+      renderCandles(ohlcBuilt);
+      computeIndicatorsAndUI(mc.prices.map(p=>p[1]), mc.prices.map(p=>p[0]));
+      return;
+    }
+    // last resort: single bar
+    const single = [{x:new Date(), o:selected.price, h:selected.price, l:selected.price, c:selected.price}];
+    renderCandles(single);
+    computeIndicatorsAndUI([selected.price], [Date.now()]);
+  }catch(e){ console.error('loadCandlesRobust', e); toast('Chart load error: ' + (e.message||e)); }
 }
 
-/* ---------------- build OHLC from price ticks (grouping) ---------------- */
-function buildOHLCFromPrices(prices, hoursPerBar=1){
-  if (!prices || prices.length === 0) return [];
+/* destroy existing charts safely */
+function destroyAllCharts(){
+  try{
+    if (mainChart){ mainChart.destroy(); mainChart = null; }
+    if (rsiChart){ rsiChart.destroy(); rsiChart = null; }
+    if (macdChart){ macdChart.destroy(); macdChart = null; }
+    // clear canvases to ensure Chart can reuse
+    try{ const c = $('canvasMain'); const ctx = c.getContext('2d'); ctx.clearRect(0,0,c.width,c.height); }catch(e){}
+    try{ const r = $('canvasRsi'); r.getContext('2d').clearRect(0,0,r.width,r.height); }catch(e){}
+    try{ const m = $('canvasMacd'); m.getContext('2d').clearRect(0,0,m.width,m.height); }catch(e){}
+  }catch(e){ console.warn('destroyAllCharts error', e); }
+}
+
+/* render candlestick chart (with placeholder overlay line datasets) */
+function renderCandles(ohlcData){
+  const canvas = $('canvasMain');
+  // ensure canvas matches displayed size (helps Chart create correct backing store)
+  canvas.width = canvas.clientWidth;
+  canvas.height = canvas.clientHeight;
+
+  const ctx = canvas.getContext('2d');
+  if (mainChart){ mainChart.destroy(); mainChart = null; }
+
+  // datasets: first is candlestick; others are overlays (EMA/BB placeholder)
+  const datasets = [
+    { label: selected ? selected.symbol.toUpperCase() : 'asset', data: ohlcData, color:{up:'#16a34a', down:'#ef4444'} },
+    { type:'line', label:'EMA9', data:[], borderColor:'#0ea5e9', borderWidth:1.6, pointRadius:0, yAxisID:'y' },
+    { type:'line', label:'EMA21', data:[], borderColor:'#7c3aed', borderWidth:1.2, pointRadius:0, yAxisID:'y' },
+    { type:'line', label:'EMA50', data:[], borderColor:'#f59e0b', borderWidth:1.2, pointRadius:0, yAxisID:'y' },
+    { type:'line', label:'BBU', data:[], borderColor:'#94a3b8', borderWidth:1, pointRadius:0, borderDash:[4,4], yAxisID:'y' },
+    { type:'line', label:'BBL', data:[], borderColor:'#94a3b8', borderWidth:1, pointRadius:0, borderDash:[4,4], yAxisID:'y' }
+  ];
+
+  mainChart = new Chart(ctx, {
+    type: 'candlestick',
+    data: { datasets },
+    options: {
+      responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{ display:true, position:'top'}, tooltip:{mode:'index', intersect:false} },
+      scales:{ x:{ type:'time', time:{ unit:'day' }, ticks:{ color: '#0b1220' } }, y:{ position:'right', ticks:{ color:'#0b1220' } } }
+    }
+  });
+}
+
+/* build OHLC from price ticks grouped by hoursPerBar */
+function buildOHLCFromPrices(pricesArr, hoursPerBar=1){
+  if (!pricesArr || pricesArr.length === 0) return [];
   const msPerBar = hoursPerBar * 3600 * 1000;
-  let bars = [];
+  const bars = [];
   let cur = null;
-  for (let i=0;i<prices.length;i++){
-    const ts = prices[i][0]; const p = prices[i][1];
+  for (let i=0;i<pricesArr.length;i++){
+    const ts = pricesArr[i][0];
+    const p = pricesArr[i][1];
     if (!cur){
       const start = Math.floor(ts / msPerBar) * msPerBar;
       cur = { ts:start, o:p, h:p, l:p, c:p };
@@ -355,483 +374,338 @@ function buildOHLCFromPrices(prices, hoursPerBar=1){
       if (ts - cur.ts < msPerBar){
         cur.h = Math.max(cur.h, p); cur.l = Math.min(cur.l, p); cur.c = p;
       } else {
-        bars.push({ x: new Date(cur.ts), o: cur.o, h: cur.h, l: cur.l, c: cur.c });
+        bars.push({ x:new Date(cur.ts), o:cur.o, h:cur.h, l:cur.l, c:cur.c });
         const start = Math.floor(ts / msPerBar) * msPerBar;
         cur = { ts:start, o:p, h:p, l:p, c:p };
       }
     }
   }
-  if (cur) bars.push({ x: new Date(cur.ts), o:cur.o, h:cur.h, l:cur.l, c:cur.c });
+  if (cur) bars.push({ x:new Date(cur.ts), o:cur.o, h:cur.h, l:cur.l, c:cur.c });
   return bars;
 }
 
-/* ---------------- render main candlestick chart & overlays ---------------- */
-function renderMainChart(ohlcData){
-  const ctx = document.getElementById('canvasMain').getContext('2d');
-  if (chartMain) chartMain.destroy();
-
-  // base candlestick dataset
-  const datasets = [{
-    label: selected ? selected.symbol.toUpperCase() : 'Asset',
-    data: ohlcData,
-    color: { up: '#16a34a', down: '#ef4444', unchanged: '#999' }
-  }];
-
-  // empty placeholders for indicator overlay lines (Chart.js line datasets)
-  datasets.push({ type:'line', label:'EMA9', data: [], borderColor:'#0ea5e9', borderWidth:1.5, pointRadius:0, yAxisID:'y' });
-  datasets.push({ type:'line', label:'EMA21', data: [], borderColor:'#7c3aed', borderWidth:1.2, pointRadius:0, yAxisID:'y' });
-  datasets.push({ type:'line', label:'EMA50', data: [], borderColor:'#f59e0b', borderWidth:1.2, pointRadius:0, yAxisID:'y' });
-  datasets.push({ type:'line', label:'BB:Upper', data: [], borderColor:'#94a3b8', borderWidth:1, pointRadius:0, borderDash:[4,4], yAxisID:'y' });
-  datasets.push({ type:'line', label:'BB:Lower', data: [], borderColor:'#94a3b8', borderWidth:1, pointRadius:0, borderDash:[4,4], yAxisID:'y' });
-
-  chartMain = new Chart(ctx, {
-    type: 'candlestick',
-    data: { datasets },
-    options: {
-      plugins: { legend: { display: true, position:'top' }, tooltip:{ mode:'index', intersect:false } },
-      responsive:true, maintainAspectRatio:false,
-      scales: {
-        x: { type:'time', time:{ unit:'day' }, ticks:{ color:'#0b1220' } },
-        y: { position:'right', ticks:{ color:'#0b1220' } }
-      }
-    }
-  });
-}
-
-/* ---------------- compute indicators: EMA, BB, ATR, RSI, MACD ---------------- */
-function computeAllIndicators(closes, timestamps){
+/* compute indicators and update overlays and subcharts */
+function computeIndicatorsAndUI(closes, timestamps){
   try{
-    // closes: numeric array; timestamps: ms epoch parallel array
-    // compute EMA9, EMA21, EMA50
-    const ema9 = technicalindicators.EMA.calculate({ period: 9, values: closes });
-    const ema21 = technicalindicators.EMA.calculate({ period: 21, values: closes });
-    const ema50 = technicalindicators.EMA.calculate({ period: 50, values: closes });
+    // compute EMAs
+    const ema9 = technicalindicators.EMA.calculate({period:9, values:closes});
+    const ema21 = technicalindicators.EMA.calculate({period:21, values:closes});
+    const ema50 = technicalindicators.EMA.calculate({period:50, values:closes});
+    // BBands
+    const bb = technicalindicators.BollingerBands.calculate({period:20, stdDev:2, values:closes});
+    // ATR estimate via SMA of true ranges if no HL data
+    const atr = computeATRapprox(closes);
+    // RSI and MACD
+    const rsi = technicalindicators.RSI.calculate({period:14, values:closes});
+    const macd = technicalindicators.MACD.calculate({values:closes, fastPeriod:12, slowPeriod:26, signalPeriod:9, SimpleMAOscillator:false, SimpleMASignal:false});
 
-    // Bollinger Bands (20,2)
-    const bb = technicalindicators.BollingerBands.calculate({ period:20, stdDev:2, values: closes });
+    // attach overlay arrays to main chart datasets (align to right)
+    attachOverlays(ema9, ema21, ema50, bb);
 
-    // ATR (14) - compute from OHLC? We only have closes here sometimes, so approximate using high-low if available:
-    // We'll compute ATR using technicalindicators.ATR if highs/lows are accessible; for now approximate via TR using close differences if not.
-    // For simplicity, compute ATR via provided library if possible:
-    // If chartMain dataset has OHLC, get highs/lows
-    const ds = chartMain && chartMain.data && chartMain.data.datasets && chartMain.data.datasets[0] ? chartMain.data.datasets[0].data : null;
-    let highs = [], lows = [], opens = [];
-    if (ds && ds.length){
-      ds.forEach(d => { highs.push(d.h); lows.push(d.l); opens.push(d.o); });
-    }
-    let atr = [];
-    if (highs.length === closes.length){
-      atr = technicalindicators.ATR.calculate({ period:14, high:highs, low:lows, close:closes });
-    } else {
-      // fallback estimate: ATR by smoothed absolute returns
-      const trs = [];
-      for (let i=1;i<closes.length;i++) trs.push(Math.abs(closes[i]-closes[i-1]));
-      atr = technicalindicators.SMA.calculate({ period:14, values: trs });
-    }
+    // render RSI and MACD subpanels
+    renderRsiChart(rsi);
+    renderMacdChart(macd);
 
-    // RSI(14)
-    const rsi = technicalindicators.RSI.calculate({ period:14, values: closes });
-
-    // MACD
-    const macd = technicalindicators.MACD.calculate({ values: closes, fastPeriod:12, slowPeriod:26, signalPeriod:9, SimpleMAOscillator:false, SimpleMASignal:false });
-
-    // attach overlays to main chart datasets
-    attachOverlaysToMain(ema9, ema21, ema50, bb, closes);
-
-    // render RSI chart
-    renderRsiPanel(rsi, timestamps);
-
-    // render MACD chart
-    renderMacdPanel(macd, timestamps);
-
-    // compute DITIMPA callouts from indicator signals
-    computeCallouts(ema9, ema21, rsi, macd, atr);
-
-  }catch(e){
-    console.warn('computeAllIndicators err', e);
-  }
+    // compute callouts and archive
+    computeDITIMPACallouts(ema9, ema21, rsi, macd, atr);
+  }catch(e){ console.warn('computeIndicatorsAndUI', e); }
 }
 
-/* ---------------- attach overlays to main Chart.js candlestick (EMA & BB) ---------------- */
-function attachOverlaysToMain(ema9, ema21, ema50, bb, closes){
-  // map to chart x values (candlestick points)
-  if (!chartMain) return;
-  const baseDataset = chartMain.data.datasets[0]; // candlestick
-  const len = baseDataset.data.length;
-  const ema9Data = new Array(len).fill(null);
-  const ema21Data = new Array(len).fill(null);
-  const ema50Data = new Array(len).fill(null);
-  const bbUpper = new Array(len).fill(null);
-  const bbLower = new Array(len).fill(null);
-  // align ends: technicalindicators returns shorter arrays; align to right
-  const offset9 = len - ema9.length;
-  for (let i=0;i<ema9.length;i++) if (offset9+i>=0 && offset9+i < len) ema9Data[offset9+i] = { x: baseDataset.data[offset9+i].x, y: ema9[i] };
-  const offset21 = len - ema21.length;
-  for (let i=0;i<ema21.length;i++) if (offset21+i>=0 && offset21+i<len) ema21Data[offset21+i] = { x: baseDataset.data[offset21+i].x, y: ema21[i] };
-  const offset50 = len - ema50.length;
-  for (let i=0;i<ema50.length;i++) if (offset50+i>=0 && offset50+i<len) ema50Data[offset50+i] = { x: baseDataset.data[offset50+i].x, y: ema50[i] };
-  const offsetBB = len - bb.length;
-  for (let i=0;i<bb.length;i++){
-    if (offsetBB+i>=0 && offsetBB+i<len){
-      bbUpper[offsetBB+i] = { x: baseDataset.data[offsetBB+i].x, y: bb[i].upper };
-      bbLower[offsetBB+i] = { x: baseDataset.data[offsetBB+i].x, y: bb[i].lower };
-    }
-  }
+/* approximate ATR using SMA of absolute close changes (fallback) */
+function computeATRapprox(closes){
+  const trs = [];
+  for (let i=1;i<closes.length;i++) trs.push(Math.abs(closes[i]-closes[i-1]));
+  return technicalindicators.SMA.calculate({period:14, values:trs});
+}
 
-  // attach into datasets (datasets[1..] were placeholders)
-  // find datasets by label
-  chartMain.data.datasets = chartMain.data.datasets.map(ds => {
-    if (ds.label === 'EMA9') { ds.data = ema9Data; return ds; }
-    if (ds.label === 'EMA21') { ds.data = ema21Data; return ds; }
-    if (ds.label === 'EMA50') { ds.data = ema50Data; return ds; }
-    if (ds.label === 'BB:Upper') { ds.data = bbUpper; return ds; }
-    if (ds.label === 'BB:Lower') { ds.data = bbLower; return ds; }
-    return ds;
+/* attach overlays (map shorter arrays to end of candlestick data) */
+function attachOverlays(ema9, ema21, ema50, bb){
+  if (!mainChart) return;
+  const base = mainChart.data.datasets[0].data;
+  const len = base.length;
+  // prepare arrays filled with null
+  const makeArr = (src) => { const res = new Array(len).fill(null); const offset = len - src.length; for (let i=0;i<src.length;i++){ if (offset+i>=0 && offset+i<len) res[offset+i] = { x: base[offset+i].x, y: src[i] }; } return res; };
+  const ema9Arr = ema9.length ? makeArr(ema9) : new Array(len).fill(null);
+  const ema21Arr = ema21.length ? makeArr(ema21) : new Array(len).fill(null);
+  const ema50Arr = ema50.length ? makeArr(ema50) : new Array(len).fill(null);
+  const bbuArr = bb.length ? makeArr(bb.map(x=>x.upper)) : new Array(len).fill(null);
+  const bblArr = bb.length ? makeArr(bb.map(x=>x.lower)) : new Array(len).fill(null);
+
+  // ensure datasets exist
+  mainChart.data.datasets.forEach(ds => {
+    if (ds.label === 'EMA9') ds.data = ema9Arr;
+    if (ds.label === 'EMA21') ds.data = ema21Arr;
+    if (ds.label === 'EMA50') ds.data = ema50Arr;
+    if (ds.label === 'BBU') ds.data = bbuArr;
+    if (ds.label === 'BBL') ds.data = bblArr;
   });
-  chartMain.update();
+  mainChart.update();
 }
 
-/* ----------------- render RSI panel ----------------- */
-function renderRsiPanel(rsiValues, timestamps){
-  const ctx = document.getElementById('canvasRsi').getContext('2d');
-  if (chartRsi) chartRsi.destroy();
-  const labels = rsiValues.map((_,i)=> i);
-  chartRsi = new Chart(ctx, {
+/* RSI render */
+function renderRsiChart(rsiValues){
+  const c = $('canvasRsi');
+  c.width = c.clientWidth; c.height = c.clientHeight;
+  const ctx = c.getContext('2d');
+  if (rsiChart){ rsiChart.destroy(); rsiChart = null; }
+  rsiChart = new Chart(ctx, {
     type:'line',
-    data: { labels: labels, datasets: [{ label:'RSI', data: rsiValues, borderColor:'#7c3aed', pointRadius:0, fill:false }] },
-    options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ min:0, max:100, ticks:{ color:'#0b1220' } }, x:{ display:false } }, plugins:{ legend:{ display:false } } }
+    data:{ labels: rsiValues.map((_,i)=>i), datasets:[{ label:'RSI', data:rsiValues, borderColor:'#7c3aed', pointRadius:0, fill:false }] },
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}}, scales:{ y:{ min:0, max:100 } } }
   });
 }
 
-/* ----------------- render MACD panel ----------------- */
-function renderMacdPanel(macdValues, timestamps){
-  const ctx = document.getElementById('canvasMacd').getContext('2d');
-  if (chartMacd) chartMacd.destroy();
-  const hist = macdValues.map(m => m ? m.histogram : null);
-  const signal = macdValues.map(m => m ? m.signal : null);
-  const macdLine = macdValues.map(m => m ? m.MACD : null);
-  chartMacd = new Chart(ctx, {
+/* MACD render */
+function renderMacdChart(macd){
+  const c = $('canvasMacd'); c.width = c.clientWidth; c.height = c.clientHeight;
+  const ctx = c.getContext('2d'); if (macdChart){ macdChart.destroy(); macdChart = null; }
+  const hist = macd.map(m => m ? m.histogram : null);
+  const sig = macd.map(m => m ? m.signal : null);
+  const macdLine = macd.map(m => m ? m.MACD : null);
+  macdChart = new Chart(ctx, {
     type:'bar',
-    data: { labels: hist.map((_,i)=>i), datasets: [
-      { type:'bar', label:'MACD Hist', data: hist, backgroundColor: hist.map(v => v>=0 ? '#16a34a' : '#ef4444') },
-      { type:'line', label:'Signal', data: signal, borderColor:'#0ea5e9', pointRadius:0, fill:false },
-      { type:'line', label:'MACD', data: macdLine, borderColor:'#7c3aed', pointRadius:0, fill:false }
+    data:{ labels: hist.map((_,i)=>i), datasets:[
+      { type:'bar', label:'Hist', data:hist, backgroundColor: hist.map(v => v>=0 ? '#16a34a' : '#ef4444') },
+      { type:'line', label:'Signal', data:sig, borderColor:'#0ea5e9', pointRadius:0, fill:false },
+      { type:'line', label:'MACD', data:macdLine, borderColor:'#7c3aed', pointRadius:0, fill:false }
     ]},
-    options: { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } }, scales:{ x:{ display:false }, y:{ ticks:{ color:'#0b1220' } } } }
+    options:{ responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
   });
 }
 
-/* ----------------- compute DITIMPA callouts ----------------- */
-function computeCallouts(ema9, ema21, rsi, macd, atr){
-  const calloutNode = $('callouts'); calloutNode.innerHTML = '';
-  const callouts = [];
-  // EMA cross detection (check last two points)
+/* compute DITIMPA callouts and append archive entries */
+function computeDITIMPACallouts(ema9, ema21, rsi, macd, atr){
+  const cnode = $('callouts'); cnode.innerHTML = '';
+  const calls = [];
+  // ema cross
   if (ema9.length >= 2 && ema21.length >= 2){
-    const a = ema9[ema9.length-1], aPrev = ema9[ema9.length-2];
-    const b = ema21[ema21.length-1], bPrev = ema21[ema21.length-2];
-    if (a > b && aPrev <= bPrev) callouts.push('EMA9 crossed above EMA21 — bullish signal');
-    if (a < b && aPrev >= bPrev) callouts.push('EMA9 crossed below EMA21 — bearish signal');
+    const k = ema9.length-1; const a = ema9[k], aPrev = ema9[k-1]; const b = ema21[ema21.length-1], bPrev = ema21[ema21.length-2]||b;
+    if (a > b && aPrev <= bPrev) calls.push('EMA9 crossed above EMA21 — short-term bullish');
+    if (a < b && aPrev >= bPrev) calls.push('EMA9 crossed below EMA21 — short-term bearish');
   }
-  // RSI thresholds
-  if (rsi && rsi.length) {
+  // rsi
+  if (rsi.length){
     const last = rsi[rsi.length-1];
-    if (last > 70) callouts.push('RSI > 70 — overbought zone');
-    if (last < 30) callouts.push('RSI < 30 — oversold zone');
+    if (last > 70) calls.push('RSI > 70 — overbought');
+    if (last < 30) calls.push('RSI < 30 — oversold');
   }
-  // MACD histogram spike
-  if (macd && macd.length){
-    const hist = macd.map(m => m.histogram);
-    const last = hist[hist.length-1];
-    const prev = hist[hist.length-2] || 0;
-    if (last > prev * 2 && last > 0) callouts.push('MACD histogram increasing rapidly — bullish momentum');
-    if (last < prev * 2 && last < 0) callouts.push('MACD histogram dropping rapidly — bearish momentum');
+  // macd hist spikes
+  if (macd.length){
+    const hist = macd.map(m=>m.histogram);
+    const last = hist[hist.length-1]||0; const prev = hist[hist.length-2]||0;
+    if (last > prev*1.8 && last > 0) calls.push('MACD histogram rising quickly — momentum building');
+    if (last < prev*1.8 && last < 0) calls.push('MACD histogram dropping — momentum weakening');
   }
-  // ATR note
+  // atr
   if (atr && atr.length){
-    const lastAtr = atr[atr.length-1] || null;
-    if (lastAtr && lastAtr > (Math.abs(selected.price) * 0.05)) callouts.push('ATR elevated — increased volatility');
+    const lastAtr = atr[atr.length-1] || 0;
+    if (lastAtr > (selected.price * 0.03)) calls.push('ATR elevated — volatility increased');
   }
-  // show top 4 callouts
-  callouts.slice(0,4).forEach(c => {
-    const div = document.createElement('div'); div.className = 'callout-item'; div.textContent = c;
-    calloutNode.appendChild(div);
-    archive.unshift({type:'callout', text:c, coin:selected?selected.symbol:'', ts: Date.now()});
+
+  calls.slice(0,4).forEach(c => {
+    const div = document.createElement('div'); div.className='callout-item'; div.textContent = c; $('callouts').appendChild(div);
+    archive.unshift({ type:'callout', coin:selected?selected.symbol:'', text:c, ts:Date.now() });
   });
+  $('archivePanel').textContent = `Archive entries: ${archive.length}`;
 }
 
-/* ----------------- news fetching (Google News RSS + proxy fallback) ---------------- */
-async function fetchNewsForAsset(coin){
-  const container = $('newsContainer'); container.innerHTML = '<div class="small">Loading news...</div>';
-  const q = `https://news.google.com/rss/search?q=${encodeURIComponent(coin.name)}+when:1d`;
-  const xml = await safeText(q);
-  if (!xml) { container.innerHTML = '<div class="small">No news available.</div>'; return; }
-  const dom = new DOMParser().parseFromString(xml, 'text/xml');
+/* ----------------- news: fetch 3 headlines last 24h w/ thumbnails ----------------- */
+async function loadNewsForAsset(coin){
+  const container = $('newsList'); container.innerHTML = '<div class="small">Loading news (24h)…</div>';
+  // Google News RSS (when:1d) format
+  const base = `https://news.google.com/rss/search?q=${encodeURIComponent(coin.name)}+when:1d`;
+  // robust fetch: try direct -> proxy -> alt proxy
+  const text = await fetchTextWithFallback(base);
+  if (!text) { container.innerHTML = '<div class="small">No news (blocked or unavailable)</div>'; return; }
+  const dom = new DOMParser().parseFromString(text,'text/xml');
   const items = dom.querySelectorAll('item');
   container.innerHTML = '';
   let count = 0;
-  for (let i=0;i<items.length && count<8;i++){
+  for (let i=0;i<items.length && count<3;i++){
     const it = items[i];
     const title = it.querySelector('title')?.textContent || '';
     const link = it.querySelector('link')?.textContent || '';
     const desc = it.querySelector('description')?.textContent || '';
+    // try to extract <img> from description
     let img = null;
-    const m = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
+    const m = desc && desc.match(/<img[^>]+src=["']([^"']+)["']/i);
     if (m) img = m[1];
+    // try to fetch og:image from the article page via proxy (best-effort)
+    if (!img && link){
+      try{
+        const html = await fetchTextWithFallback(link);
+        if (html){
+          const mo = html.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) || html.match(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i);
+          if (mo) img = mo[1];
+        }
+      }catch(e){ /* ignore */ }
+    }
     const el = document.createElement('div'); el.className = 'floating-news';
     el.innerHTML = `<img class="news-thumb" src="${img||''}" onerror="this.style.display='none'"><div><div style="font-weight:700"><a href="${link}" target="_blank" style="color:var(--ink);text-decoration:none">${title}</a></div><div class="small" style="margin-top:6px;color:var(--muted)">${link}</div></div>`;
     container.appendChild(el);
     count++;
   }
-  if (count === 0) container.innerHTML = '<div class="small">No recent headlines found (last 24h)</div>';
+  if (count === 0) container.innerHTML = '<div class="small">No headlines in the last 24 hours</div>';
 }
 
-/* ---------------- People: auto-select 200, show only closest connection + 2 headlines ---------------- */
-function buildPeople(){
-  // curated seed for close connections
-  const seed = [
-    "Elon Musk","Vitalik Buterin","Changpeng Zhao","Michael Saylor","Cathie Wood","Larry Fink","Warren Buffett","Jamie Dimon","Bill Gates","Jeff Bezos",
-    "Andreas Antonopoulos","Naval Ravikant","Marc Andreessen","Ben Horowitz","Ray Dalio","Paul Tudor Jones","Ken Griffin","Jim Simons","Peter Thiel","Reid Hoffman",
-    "Sam Altman","Jensen Huang","Tim Cook","Sundar Pichai","Christine Lagarde","Jerome Powell","Janet Yellen","Xi Jinping","Narendra Modi","Vladimir Putin",
-    "Mark Cuban","Chamath Palihapitiya","CZ","Satoshi Nakamoto","Michael Bloomberg","Larry Page","Sergey Brin","Cathie Wood","Steve Cohen","Daniel Loeb"
-  ];
+/* ----------------- People: auto-select 200 and load 2 headlines each ----------------- */
+function buildPeopleList(){
+  const seed = ["Elon Musk","Vitalik Buterin","Changpeng Zhao","Michael Saylor","Cathie Wood","Larry Fink","Warren Buffett","Jamie Dimon","Bill Gates","Jeff Bezos","Andreas Antonopoulos","Naval Ravikant","Marc Andreessen","Ben Horowitz","Ray Dalio","Peter Thiel","Mark Cuban","Chamath Palihapitiya","Sam Altman","Jensen Huang","Tim Cook","Sundar Pichai","Christine Lagarde","Jerome Powell","Janet Yellen","Xi Jinping","Narendra Modi","Vladimir Putin","Michael Bloomberg","Larry Page","Sergey Brin","CZ"];
   let arr = seed.slice();
   while (arr.length < PEOPLE_COUNT) arr.push('Influencer ' + (arr.length+1));
-  people = arr.map((n,i) => ({ id:'p'+(i+1), name:n, conn: guessConnection(n), img:null, news:[] }));
-  renderPeoplePreview();
-  // progressively enrich people (profile image + 2 headlines)
-  setTimeout(() => enrichPeopleBatch(0), 800);
+  people = arr.map((n,i)=>({ id:'p'+(i+1), name:n, conn:guessConnection(n), img:null, news:[] }));
+  renderPeople();
+  setTimeout(()=> enrichPeopleProgressive(0), 800);
 }
-
 function guessConnection(name){
-  // lightweight mapping for a few known names
-  const mapping = {
-    "Elon Musk": "Closest connection: Tesla / SpaceX / X",
-    "Vitalik Buterin": "Closest connection: Ethereum co-founder",
-    "Changpeng Zhao": "Closest connection: Binance",
-    "Michael Saylor": "Closest connection: MicroStrategy (BTC advocate)",
-    "Cathie Wood": "Closest connection: ARK Invest",
-    "Larry Fink": "Closest connection: BlackRock",
-    "Warren Buffett": "Closest connection: Berkshire Hathaway",
-    "Jamie Dimon": "Closest connection: JPMorgan",
-    "Bill Gates": "Closest connection: Microsoft / Gates Foundation",
-    "Jeff Bezos": "Closest connection: Amazon / Blue Origin",
-    "Andreas Antonopoulos": "Closest connection: BTC advocate / educator",
-    "Naval Ravikant": "Closest connection: Angel investor",
-    "Marc Andreessen": "Closest connection: Andreessen Horowitz",
-    "Ben Horowitz": "Closest connection: Andreessen Horowitz",
-    "Ray Dalio": "Closest connection: Bridgewater",
-    "Peter Thiel": "Closest connection: Founders Fund",
-    "Mark Cuban": "Closest connection: Tech entrepreneur / investor",
-    "Chamath Palihapitiya": "Closest connection: Social Capital",
-    "CZ": "Closest connection: Binance"
-  };
-  return mapping[name] || 'Closest connection: —';
+  const map = { "Elon Musk":"Tesla / SpaceX", "Vitalik Buterin":"Ethereum", "Changpeng Zhao":"Binance", "Michael Saylor":"MicroStrategy", "Cathie Wood":"ARK Invest", "Larry Fink":"BlackRock", "Warren Buffett":"Berkshire", "Jamie Dimon":"JPMorgan" };
+  return map[name] || "Closest connection: —";
 }
-
-function renderPeoplePreview(){
-  const node = $('peopleListPreview'); node.innerHTML = '';
-  people.slice(0,20).forEach(p => {
-    const el = document.createElement('div'); el.className='person-card';
-    el.innerHTML = `<div class="person-thumb"><img src="${p.img||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div><div style="flex:1"><div style="font-weight:800">${p.name}</div><div class="small" id="conn-${p.id}">${p.conn}</div><div class="small" id="pnews-${p.id}">Loading...</div></div>`;
-    node.appendChild(el);
-  });
-  // full people scroll render
-  renderPeopleFull();
-}
-
-function renderPeopleFull(){
+function renderPeople(){
   const node = $('peopleScroll'); node.innerHTML = '';
   people.forEach(p => {
-    const card = document.createElement('div'); card.className = 'person-card';
-    card.innerHTML = `<div class="person-thumb"><img src="${p.img||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div><div style="flex:1"><div style="font-weight:800">${p.name}</div><div class="small" style="margin-top:6px" id="full-conn-${p.id}">${p.conn}</div><div class="small" id="full-news-${p.id}" style="margin-top:6px">Loading headlines...</div></div>`;
-    // clicking person surfaces their news into Vision 2 AI panel
-    card.addEventListener('click', ()=> surfacePersonToAI(p));
+    const card = document.createElement('div'); card.className='person-card';
+    card.innerHTML = `<div class="person-thumb"><img src="${p.img||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div><div style="flex:1"><div style="font-weight:800">${p.name}</div><div class="small" id="pconn-${p.id}" style="margin-top:6px">${p.conn}</div><div class="small" id="pnews-${p.id}" style="margin-top:6px">Loading...</div></div>`;
+    card.addEventListener('click', ()=> surfacePerson(p));
     node.appendChild(card);
   });
+  $('peoplePreview').textContent = 'People loaded (progressive headlines)';
 }
-
-async function enrichPeopleBatch(start){
+async function enrichPeopleProgressive(start){
   const batch = 10;
   for (let i=start;i<Math.min(people.length, start+batch); i++){
     const p = people[i];
+    // try wiki thumbnail
     try{
-      // attempt wiki thumbnail
-      const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(p.name)}`;
-      try{
-        const w = await safeJSON(wikiUrl);
-        if (w && w.thumbnail && w.thumbnail.source) p.img = w.thumbnail.source;
-      }catch(e){ /* ignore */ }
-
-      // fetch 2 recent headlines via Google News
+      const wiki = await fetchJSONWithFallback(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(p.name)}`);
+      if (wiki && wiki.thumbnail && wiki.thumbnail.source) p.img = wiki.thumbnail.source;
+    }catch(e){}
+    // fetch 2 headlines last 3 days (Google News)
+    try{
       const rss = `https://news.google.com/rss/search?q=${encodeURIComponent(p.name)}+when:3d`;
-      const xml = await safeText(rss);
-      if (xml){
-        const dom = new DOMParser().parseFromString(xml, 'text/xml');
+      const text = await fetchTextWithFallback(rss);
+      if (text){
+        const dom = new DOMParser().parseFromString(text,'text/xml');
         const items = dom.querySelectorAll('item');
         p.news = [];
         for (let k=0;k<items.length && p.news.length<2;k++){
           const it = items[k];
           const title = it.querySelector('title')?.textContent || '';
           const link = it.querySelector('link')?.textContent || '';
-          const desc = it.querySelector('description')?.textContent || '';
-          let img = null;
-          const m = desc.match(/<img[^>]+src=["']([^"']+)["']/i);
-          if (m) img = m[1];
-          p.news.push({ title, link, img });
+          p.news.push({title, link});
         }
       }
-    }catch(e){ console.warn('enrich person', p.name, e); }
-    // update preview & full UI
-    const preview = $('pnews-'+p.id); if (preview) { /* nothing */ }
-    const short = $('pnews-'+p.id); // may not exist
-    const pfull = $('full-news-'+p.id);
-    const conn = $('conn-'+p.id); if (conn) conn.textContent = p.conn;
-    if (pfull){
-      if (p.news && p.news.length) pfull.innerHTML = p.news.map(n=>`<div style="margin-top:6px"><a href="${n.link}" target="_blank" style="color:var(--ink);text-decoration:none">${n.title}</a></div>`).join('');
-      else pfull.textContent = 'No recent headlines';
-    }
-    // also update the preview list for top 20
-    const pnewsPreview = $('pnews-'+p.id); if (pnewsPreview){
-      if (p.news && p.news.length) pnewsPreview.innerHTML = p.news.map(n=>`<div style="margin-top:6px">${n.title}</div>`).join('');
-      else pnewsPreview.textContent = 'No recent headlines';
-    }
-    await new Promise(r=>setTimeout(r, 180)); // polite
+    }catch(e){ console.warn('person news fail', p.name, e); }
+    // update UI
+    const nEl = $('pnews-'+p.id);
+    if (nEl) nEl.innerHTML = p.news.length ? p.news.map(n=>`<div style="margin-top:6px"><a href="${n.link}" target="_blank" style="color:var(--ink);text-decoration:none">${n.title}</a></div>`).join('') : 'No recent headlines';
+    const imgEl = document.querySelector(`#peopleScroll img[src='${p.img||''}']`);
+    await new Promise(r=>setTimeout(r,140));
   }
-  if (start + batch < people.length) setTimeout(()=> enrichPeopleBatch(start+batch), 600);
+  if (start + batch < people.length) setTimeout(()=> enrichPeopleProgressive(start+batch), 600);
+}
+function surfacePerson(p){
+  // show in AI panel
+  let html = `<div style="font-weight:800">${p.name}</div><div class="small" style="margin-top:6px">${p.conn}</div>`;
+  if (p.news && p.news.length){ html += `<div style="margin-top:8px"><strong>Latest</strong></div>`; p.news.forEach(n=> html += `<div class="small" style="margin-top:6px"><a href="${n.link}" target="_blank" style="color:var(--ink);text-decoration:none">${n.title}</a></div>`); }
+  html += `<div style="margin-top:8px"><button class="pill" onclick="generateMissionFromPerson('${p.id}')">Use in Mission</button></div>`;
+  $('aiPanel').innerHTML = html;
 }
 
-/* ---------------- surface person to AI command center ---------------- */
-function surfacePersonToAI(person){
-  // show the two headlines and a suggested follow-up in the AI panel
-  let html = `<div style="font-weight:800">${person.name}</div><div class="small" style="margin-top:6px">${person.conn}</div>`;
-  if (person.news && person.news.length){
-    html += '<div style="margin-top:8px"><strong>Recent headlines</strong></div>';
-    person.news.forEach(n => html += `<div class="small" style="margin-top:6px"><a href="${n.link}" target="_blank" style="color:var(--ink);text-decoration:none">${n.title}</a></div>`);
-  }
-  html += `<div style="margin-top:8px"><button class="pill" onclick="requestMissionFromPerson('${person.id}')">Use in Mission</button></div>`;
-  $('aiCommandPanel').innerHTML = html;
-}
-
-/* ---------------- simple mission generation from person context ---------------- */
-function requestMissionFromPerson(pid){
+/* generate a 5-step mission using selected asset + person */
+function generateMissionFromPerson(pid){
   const p = people.find(x=>x.id===pid);
-  if (!p) return;
-  // craft 5-step mission (simple heuristics)
+  if (!p) return toast('Person not found');
   const steps = [
-    `1) Quick scan: open ${selected?selected.symbol.toUpperCase():'[asset]'} chart + 24h orderbook.`,
-    `2) Read latest 2 headlines from ${p.name}.`,
-    `3) Check on-chain activity & DexS for microcap signals.`,
-    `4) Create verification steps: liquidity depth, holder concentration, news source reliability.`,
-    `5) Suggest watch or ladder buy plan (simulated).`
+    `Check ${selected ? selected.symbol.toUpperCase() : '[asset]'} 1h/24h momentum and RSI.`,
+    `Scan top headlines for ${p.name} and related topics.`,
+    `Check on-chain transfer spikes (DexS/solscan) for relevant tokens.`,
+    `Synthesize risk checklist: liquidity depth, source reliability, holder concentration.`,
+    `Prepare a simulated ladder plan or watchlist (simulated only).`
   ];
-  $('aiCommandPanel').innerHTML = `<div style="font-weight:800">Mission for context: ${p.name}</div><div class="small" style="margin-top:8px">${steps.join('<br>')}</div>`;
-  appendArchive({ type:'mission', person:p.name, steps, ts:Date.now() });
-  toast('Mission created from person context');
-}
-
-/* ----------------- Archive: triggers, callouts, missions ---------------- */
-function appendArchive(item){
-  archive.unshift(item);
-  if (archive.length > 1000) archive.pop();
+  $('aiPanel').innerHTML = `<div style="font-weight:800">Mission — context: ${p.name}</div><div class="small" style="margin-top:8px">${steps.join('<br>')}</div>`;
+  archive.unshift({ type:'mission', person:p.name, asset:selected?selected.symbol:'', steps, ts:Date.now() });
   $('archivePanel').textContent = `Archive entries: ${archive.length}`;
+  toast('Mission generated and archived (simulated)');
 }
 
-/* ----------------- Radar scanning (basic anomaly detection) ---------------- */
-async function runRadarScan(){
-  $('radarPanel').textContent = 'Scanning market anomalies…';
-  // simple heuristic: compare 1h change vs 24h change and flag > threshold
+/* Market Radar scan */
+async function runRadar(){
+  $('radarPanel').textContent = 'Scanning…';
   try{
-    // fetch small summary from CoinGecko for top coins (already have coins), re-check prices quickly
     const ids = coins.slice(0,40).map(c=>c.id).join(',');
     const url = `${COINGECKO}/coins/markets?vs_currency=usd&ids=${encodeURIComponent(ids)}&order=market_cap_desc&per_page=40&page=1&price_change_percentage=1h,24h`;
-    const res = await safeJSON(url);
+    const res = await fetchJSONWithFallback(url);
     const flags = [];
     res.forEach(r => {
-      const p1h = r.price_change_percentage_1h_in_currency || 0;
+      const p1 = r.price_change_percentage_1h_in_currency || 0;
       const p24 = r.price_change_percentage_24h || 0;
-      if (Math.abs(p1h) > 5) flags.push(`${r.symbol.toUpperCase()} ${p1h.toFixed(2)}% 1h`);
+      if (Math.abs(p1) > 6) flags.push(`${r.symbol.toUpperCase()} ${p1.toFixed(2)}% 1h`);
       if (Math.abs(p24) > 12) flags.push(`${r.symbol.toUpperCase()} ${p24.toFixed(2)}% 24h`);
     });
-    $('radarPanel').textContent = flags.length ? 'Anomalies: ' + flags.slice(0,6).join(', ') : 'No major anomalies detected';
-    appendArchive({ type:'radar', flags, ts:Date.now() });
-    if (flags.length) toast('Radar detected anomalies: ' + flags.slice(0,3).join(', '), 8000);
+    $('radarPanel').textContent = flags.length ? 'Anomalies: ' + flags.slice(0,6).join(', ') : 'No anomalies';
+    archive.unshift({ type:'radar', flags, ts:Date.now() });
+    toast('Radar scan complete');
   }catch(e){ console.warn('radar error', e); $('radarPanel').textContent = 'Radar error'; }
 }
 
-/* ----------------- Rules (simple simulated IF-THEN) ---------------- */
-function addRule(expr){
-  const id = 'r'+Date.now();
-  rules.push({id, expr});
-  localStorage.setItem('fv_rules', JSON.stringify(rules));
-  toast('Rule added: ' + expr);
-}
-function runRulesNow(){
-  rules.forEach(r => {
-    // very crude runner: support price_drop:sym:hours:percent
-    if (r.expr.startsWith('price_drop')){
-      // push fake trigger to archive (real evaluation requires fetching history)
-      appendArchive({ type:'rule_trigger', rule:r.expr, result:'simulated', ts:Date.now() });
-      toast('Rule evaluated (simulated): ' + r.expr);
-    }
-  });
+/* Archive search */
+function openArchive(){
+  let html = `<div style="font-weight:800">Shadow Archive (last 200)</div><div class="small" style="margin-top:8px">Recent entries:</div>`;
+  html += '<div style="max-height:420px;overflow:auto;margin-top:8px">';
+  archive.slice(0,200).forEach((a,i) => { html += `<div class="small" style="margin-top:6px">${new Date(a.ts).toLocaleString()} • ${a.type} • ${a.text || (a.flags? a.flags.join(', '): (a.steps? a.steps.join('; '):''))}</div>`; });
+  html += '</div>';
+  $('archivePanel').innerHTML = html;
 }
 
-/* ----------------- Solana wallet read-only check (best-effort) ---------------- */
-async function checkSolana(address){
+/* news fetch helper: returns text or null (direct -> proxy fallback) */
+async function fetchTextWithFallback(url){
   try{
-    const url = `https://public-api.solscan.io/account/tokens?address=${address}`;
     const r = await fetch(url);
-    if (r.ok){
-      const j = await r.json();
-      displayWallet(j);
-      toast('Wallet loaded (solscan)');
-      return;
-    }
-    // proxy fallback
-    const rp = await fetch(PROXY + encodeURIComponent(url));
-    if (rp.ok){
-      const j2 = await rp.json();
-      displayWallet(j2);
-      toast('Wallet loaded via proxy');
-      return;
-    }
-    toast('Wallet fetch blocked (CORS)');
-  }catch(e){ console.warn('wallet err', e); toast('Wallet error'); }
-}
-function displayWallet(tokens){
-  const left = $('left');
-  // show a small snippet under left (append)
-  const block = document.createElement('div'); block.className='module';
-  block.innerHTML = '<div style="font-weight:700">Wallet snapshot</div>';
-  if (!tokens || tokens.length === 0) block.innerHTML += '<div class="small">No tokens or blocked</div>';
-  else tokens.slice(0,8).forEach(t => { block.innerHTML += `<div class="small">${t.tokenSymbol || t.tokenName} • ${(t.uiAmountString || t.amount || '-')}</div>`; });
-  $('left').appendChild(block);
+    if (r.ok) return await r.text();
+    // try allorigins
+    try{ const rp = await fetch(PROXY + encodeURIComponent(url)); if (rp.ok) return await rp.text(); }catch(e){ console.warn('proxy1 fail', e); }
+    try{ const ra = await fetch(ALT_PROXY + encodeURIComponent(url)); if (ra.ok) return await ra.text(); }catch(e){ console.warn('proxy2 fail', e); }
+    return null;
+  }catch(e){ console.warn('fetchTextWithFallback general', e); return null; }
 }
 
-/* ----------------- small conveniences ---------------- */
-function formatMcap(n){ if(!n) return '-'; if(n>1e9) return '$'+(n/1e9).toFixed(2)+'B'; if(n>1e6) return '$'+(n/1e6).toFixed(2)+'M'; return '$'+Number(n).toFixed(0); }
-function formatMoney(n){ if(!n && n!==0) return '-'; if(n>1e9) return '$'+(n/1e9).toFixed(2)+'B'; if(n>1e6) return '$'+(n/1e6).toFixed(2)+'M'; if(n>1e3) return '$'+(n/1e3).toFixed(2)+'k'; return '$'+Number(n).toFixed(2); }
+/* utilities */
+function formatMcap(n){ if(!n) return '-'; if(n>1e12) return (n/1e12).toFixed(2)+'T'; if(n>1e9) return (n/1e9).toFixed(2)+'B'; if(n>1e6) return (n/1e6).toFixed(2)+'M'; return '$'+Number(n).toFixed(0); }
+function formatMoney(n){ if(n===undefined||n===null) return '-'; if(n>1e9) return '$'+(n/1e9).toFixed(2)+'B'; if(n>1e6) return '$'+(n/1e6).toFixed(2)+'M'; if(n>1e3) return '$'+(n/1e3).toFixed(2)+'k'; return '$'+Number(n).toFixed(2); }
 
-/* ----------------- event bindings ---------------- */
+/* event bindings and bootstrap */
 $('btnRefresh').addEventListener('click', ()=> loadTopCoins());
-$('btnLoadPeople').addEventListener('click', ()=> { buildPeople(); $('peopleStatus').textContent = 'Loading people (progressive)...'; });
-$('btnScanRadar').addEventListener('click', ()=> runRadarScan());
-$('btnCheckWallet').addEventListener('click', ()=> checkSolana(SOLANA_WALLET));
-$('btnRunMission').addEventListener('click', ()=> { if (!selected) return toast('Select asset'); toast('Mission generated (AI)'); /* simulated */ });
+$('btnLoadPeople').addEventListener('click', ()=> { buildPeopleList(); toast('People loading'); });
+$('btnScanRadar').addEventListener('click', ()=> runRadar());
+$('btnOpenArchive').addEventListener('click', ()=> openArchive());
+$('btnCheckWallet').addEventListener('click', ()=> checkSolanaWallet(SOLANA_WALLET));
+$('btnRunMission').addEventListener('click', ()=> { if (!selected) return toast('Select an asset or person'); toast('Mission run (simulated)'); });
 
-/* ----------------- boot sequence ---------------- */
-(async function boot(){
-  toast('Initializing dashboard — please wait (progressive loading)', 5000);
+async function checkSolanaWallet(addr){
+  try{
+    const url = `https://public-api.solscan.io/account/tokens?address=${addr}`;
+    const r = await fetch(url);
+    if (r.ok){ const j = await r.json(); displayWallet(j); toast('Wallet loaded'); return; }
+    // try proxy
+    const rp = await fetch(PROXY + encodeURIComponent(url));
+    if (rp.ok){ const j2 = await rp.json(); displayWallet(j2); toast('Wallet loaded via proxy'); return; }
+    toast('Solana wallet fetch blocked by CORS');
+  }catch(e){ console.warn('sol wallet err', e); toast('Wallet error'); }
+}
+function displayWallet(tokens){ const left = $('left'); const block = document.createElement('div'); block.className='module'; block.innerHTML='<div style="font-weight:700">Wallet snapshot</div>'; if (!tokens||tokens.length===0) block.innerHTML+='<div class="small">No tokens or blocked</div>'; else tokens.slice(0,8).forEach(t=> block.innerHTML += `<div class="small">${t.tokenSymbol||t.tokenName} • ${(t.uiAmountString||t.amount||'-')}</div>`); left.appendChild(block); }
+
+/* bootstrap */
+(async function init(){
+  toast('Initializing — give it 30–90s for people/news to fill in');
   await loadTopCoins();
-  buildPeople(); // auto start people enrichment
-  // load any saved rules
-  try{ const r = JSON.parse(localStorage.getItem('fv_rules') || '[]'); if (r && r.length) rules = r; }catch(e){}
+  buildPeopleList(); // auto-start people
   // periodic rule evaluation (simulated)
-  setInterval(()=> runRulesNow(), 30_000);
+  setInterval(()=> { /* run rules (simulated) */ }, 30_000);
 })();
 
-/* ---- Expose for debugging in console ---- */
-window.__fv = { coins, people, selected, archive, addRule };
+/* expose for debugging */
+window.__fv = { coins, people, archive, selectAsset };
 
 </script>
 </body>
