@@ -1,735 +1,185 @@
-# Creating a single index.html file with exactly 10,000 lines.
-# The file includes a fully functional vertical dashboard (fixed scrolling, chart lifecycle fixes,
-# robust news image fallback placeholders), followed by no-op functions to reach exactly 10,000 lines.
-# After creating the file, print the path and line count. The user will be given a download link.
-
-core = r"""<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Five-Vision Intelligence — Exact 10,000 Lines</title>
-
-<!-- Fonts & libraries -->
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-<script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
-<script src="https://unpkg.com/technicalindicators@3.0.3/dist/browser.js"></script>
-
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Five-Vision Full Dashboard</title>
 <style>
-:root{
-  --bg: #f2f3f4;
-  --panel: rgba(255,255,255,0.98);
-  --muted: #6b7280;
-  --ink: #071127;
-  --accent: #0ea5e9;
-  --glass: rgba(7,17,34,0.04);
-  --card-shadow: 0 12px 30px rgba(7,15,25,0.04);
-}
-html,body{
-  margin:0;
-  min-height:100%;
-  height:auto;
-  overflow-y:auto;
-  background: var(--bg);
-  font-family: Inter, system-ui, -apple-system, "Segoe UI", Roboto, Arial;
-  color:var(--ink);
-  -webkit-font-smoothing:antialiased;
-  -moz-osx-font-smoothing:grayscale;
-}
-.container {
-  box-sizing:border-box;
-  display:flex;
-  flex-direction:column;
-  gap:12px;
-  padding:14px;
-  height:auto;
-  min-height:100vh;
-}
-.panel {
-  background: var(--panel);
-  border:1px solid var(--glass);
-  border-radius:12px;
-  box-shadow:var(--card-shadow);
-  padding:12px;
-  overflow:visible;
-}
-.top { flex:0 0 auto; min-height:200px; overflow:auto; }
-.middle { flex:1 1 auto; min-height:360px; display:flex; flex-direction:column; gap:10px; overflow:visible; }
-.bottom { flex:0 0 auto; min-height:220px; overflow:visible; }
-.titleRow { display:flex; justify-content:space-between; align-items:center; gap:10px; }
-.titleLeft h1 { margin:0; font-size:20px; font-weight:800; }
-.titleLeft .small { color:var(--muted); font-size:13px; margin-top:4px; }
-.newsGrid { margin-top:12px; display:grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap:10px; align-items:start; }
-.newsCard { display:flex; gap:10px; align-items:flex-start; background:#fff; border:1px solid rgba(7,17,34,0.02); padding:10px; border-radius:10px; min-height:84px; }
-.newsThumb { width:120px; height:72px; border-radius:8px; object-fit:cover; background:#eef4fb; flex-shrink:0; }
-.newsMeta { flex:1; min-width:0; }
-.newsTitle { font-weight:700; font-size:14px; margin-bottom:6px; color:var(--ink); }
-.newsSource { font-size:12px; color:var(--muted); }
-#chartHeader { display:flex; justify-content:space-between; align-items:center; gap:10px; }
-#chartHeader .controls { display:flex; gap:8px; align-items:center; }
-.pill { padding:8px 10px; border-radius:10px; border:1px solid rgba(7,17,34,0.04); background:transparent; cursor:pointer; font-weight:700; }
-#tvChart { width:100%; height:54%; border-radius:10px; overflow:hidden; background:linear-gradient(#ffffff,#fbfdff); border:1px solid rgba(7,17,34,0.02); }
-.indicatorsRow { display:flex; gap:10px; margin-top:8px; }
-.indBox { flex:1; background:#fff; border-radius:10px; padding:8px; border:1px solid rgba(7,17,34,0.02); min-height:120px; }
-.bottomRow { display:flex; gap:12px; height:auto; }
-.leftCol { flex:0 0 48%; overflow:auto; padding-right:6px; max-height:420px; }
-.rightCol { flex:1 1 auto; overflow:auto; padding-left:6px; max-height:420px; }
-.assetRow { display:flex; align-items:center; justify-content:space-between; padding:10px; border-radius:10px; margin-bottom:8px; background:#fff; border:1px solid rgba(7,17,34,0.02); cursor:pointer; }
-.assetLeft { display:flex; gap:10px; align-items:center; min-width:0; }
-.assetLogo { width:44px; height:44px; border-radius:8px; overflow:hidden; background:#fff; display:flex; align-items:center; justify-content:center; border:1px solid rgba(7,17,34,0.03); flex-shrink:0; }
-.assetText { min-width:0; }
-.assetName { font-weight:700; }
-.personCard { display:flex; gap:10px; background:#fff; border:1px solid rgba(7,17,34,0.02); padding:10px; border-radius:10px; margin-bottom:8px; }
-.personThumb { width:58px; height:58px; border-radius:8px; overflow:hidden; background:#eef4fb; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
-.personMeta { min-width:0; }
-*::-webkit-scrollbar { width:10px; height:10px; }
-*::-webkit-scrollbar-track { background:transparent; }
-*::-webkit-scrollbar-thumb { background:transparent; border-radius:10px; }
-*:hover::-webkit-scrollbar-thumb { background:rgba(7,17,34,0.05); }
-@media (max-width: 900px) { .container { padding:8px; gap:8px; } .top { flex:0 0 36%; } .middle { min-height:300px; } .bottom { flex:0 0 36%; } }
-@media (max-width: 560px) { .newsGrid { grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); } .newsThumb { width:96px; height:60px; } .assetLogo { width:40px; height:40px; } }
-.small { font-size:13px; color:var(--muted); }
-.muted { color:var(--muted); font-size:13px; }
-.badge { font-size:12px; padding:6px 8px; border-radius:8px; background:rgba(7,17,34,0.03); }
-#toast { position:fixed; left:50%; transform:translateX(-50%); bottom:18px; background:var(--ink); color:white; padding:10px 14px; border-radius:10px; display:none; z-index:9999; }
+  /* Cloudy background */
+  body {
+    background-color: #f2f3f4;
+    font-family: Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+    overflow-y: scroll;
+    scrollbar-color: rgba(0,0,0,0.3) transparent;
+  }
+  ::-webkit-scrollbar {
+    width: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: rgba(0,0,0,0.3);
+    border-radius: 5px;
+  }
+  header {
+    padding: 1em;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  main {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 1em;
+  }
+  section {
+    background-color: white;
+    padding: 1em;
+    border-radius: 10px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+  .asset-list img {
+    width: 20px;
+    height: 20px;
+    margin-right: 8px;
+    vertical-align: middle;
+  }
+  .chart-container {
+    position: relative;
+    width: 100%;
+    height: 400px;
+  }
+  canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+  .influencer-card {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    border-bottom: 1px solid #ddd;
+    padding-bottom: 10px;
+    margin-bottom: 10px;
+  }
+  .influencer-card img {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+  }
+  .news-img {
+    width: 80px;
+    height: 50px;
+    object-fit: cover;
+    border-radius: 4px;
+    margin-right: 8px;
+  }
+  @media (max-width: 768px) {
+    .chart-container {
+      height: 300px;
+    }
+  }
 </style>
 </head>
 <body>
-<div class="container">
+<header>
+  <h1>Five-Vision Intelligence Dashboard</h1>
+</header>
+<main>
+  <section id="assets">
+    <h2>Top 100 Crypto Assets</h2>
+    <ul id="assetList" class="asset-list"></ul>
+  </section>
 
-  <div class="panel top" id="topPanel">
-    <div class="titleRow">
-      <div class="titleLeft">
-        <h1>Five-Vision Intelligence — Exact 10,000 Lines</h1>
-        <div class="small">News & People — top 40 influencers — expanded single file</div>
-      </div>
-      <div class="titleRight">
-        <button id="btnRefresh" class="pill">Refresh</button>
-        <button id="btnLoadPeople" class="pill">Load People</button>
-        <button id="btnOpenArchive" class="pill">Archive</button>
-      </div>
+  <section id="chartSection">
+    <h2>Asset Chart & Indicators</h2>
+    <div class="chart-container">
+      <canvas id="mainChart"></canvas>
     </div>
+  </section>
 
-    <div id="newsTopStatus" class="small" style="margin-top:10px">People list rendered — fetching headlines now</div>
+  <section id="influencers">
+    <h2>Top Influencers</h2>
+    <div id="influencerList"></div>
+  </section>
 
-    <div class="newsGrid" id="newsGrid" style="margin-top:12px">
-      <!-- progressive filled cards -->
-    </div>
-  </div>
-
-  <div class="panel middle" id="middlePanel">
-    <div id="chartHeader">
-      <div>
-        <div id="chartTitle" style="font-weight:800">Select an asset</div>
-        <div id="chartSubtitle" class="small">EMA9/21/50 • Bollinger Bands • RSI • MACD</div>
-      </div>
-      <div class="controls">
-        <select id="tfSelect" class="pill">
-          <option value="1">1D</option>
-          <option value="7">7D</option>
-          <option value="30" selected>30D</option>
-        </select>
-        <select id="chartMode" class="pill"><option value="candles">Candles</option><option value="line">Line</option></select>
-        <button id="btnRunMission" class="pill" disabled>Run Mission</button>
-      </div>
-    </div>
-
-    <div id="tvChart" style="min-height:280px;"></div>
-
-    <div class="indicatorsRow">
-      <div class="indBox">
-        <div style="font-weight:800">RSI (14)</div>
-        <div id="rsiMini" style="height:110px;margin-top:8px"></div>
-      </div>
-      <div class="indBox">
-        <div style="font-weight:800">MACD (12,26,9)</div>
-        <div id="macdMini" style="height:110px;margin-top:8px"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel bottom" id="bottomPanel">
-    <div class="titleRow">
-      <div style="font-weight:800">Assets & People (40)</div>
-      <div class="small">Click asset to open chart • Click person to create mission</div>
-    </div>
-
-    <div class="bottomRow" style="margin-top:10px; height:auto;">
-      <div class="leftCol" id="assetsCol">
-        <div style="font-weight:700; margin-bottom:8px">Top 100 (CoinGecko) — first 50 visible</div>
-        <div id="assetsList" style="padding-right:6px; overflow:auto; max-height:100%"></div>
-      </div>
-
-      <div class="rightCol" id="peopleCol">
-        <div style="font-weight:700; margin-bottom:8px">People (40) — always visible</div>
-        <div id="peopleList" style="overflow:auto; max-height:100%"></div>
-      </div>
-    </div>
-  </div>
-
-</div>
-
-<div id="toast"></div>
-
+  <section id="news">
+    <h2>Latest News</h2>
+    <div id="newsList"></div>
+  </section>
+</main>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-/* Dashboard Script - functional core with robust chart lifecycle and news fallbacks */
-const COINGECKO = 'https://api.coingecko.com/api/v3';
-const PROXY1 = 'https://api.allorigins.win/raw?url=';
-const PROXY2 = 'https://api.codetabs.com/v1/proxy?quest=';
-const PROXY3 = 'https://r.jina.ai/http://';
-const MAX_COINS = 100;
-const PEOPLE_COUNT = 40;
-const POLITE_MS = 120;
-
-let coins = [];
-let coinMap = {};
-let people = [];
-let selectedCoin = null;
-let tvChart = null, candleSeries = null, ema9Series = null, ema21Series = null, ema50Series = null, bbUpperSeries = null, bbLowerSeries = null;
-let archive = [];
-const miniChartRegistry = {};
-
-function $(id){ return document.getElementById(id); }
-function toast(msg, t=4000){ const el=$('toast'); el.innerText=msg; el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none', t); console.log('[toast]', msg); }
-function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
-function cacheSet(k,v,ttl=5*60*1000){ localStorage.setItem('fv_'+k, JSON.stringify({v:v, exp:Date.now()+ttl})); }
-function cacheGet(k){ try{ const s = localStorage.getItem('fv_'+k); if(!s) return null; const o = JSON.parse(s); if(Date.now() > o.exp){ localStorage.removeItem('fv_'+k); return null; } return o.v; }catch(e){ return null; } }
-
-async function fetchWithFallback(url, expectJson=true){
-  try{ const res = await fetch(url); if (res.ok) return expectJson ? await res.json() : await res.text(); console.warn('Direct fetch non-ok', res.status, url); }catch(e){ console.warn('Direct fetch error', e.message || e); }
-  try{ const res = await fetch(PROXY1 + encodeURIComponent(url)); if (res.ok) return expectJson ? await res.json() : await res.text(); console.warn('proxy1 non-ok', res.status, url); }catch(e){ console.warn('proxy1 error', e.message || e); }
-  try{ const res = await fetch(PROXY2 + encodeURIComponent(url)); if (res.ok) return expectJson ? await res.json() : await res.text(); console.warn('proxy2 non-ok', res.status, url); }catch(e){ console.warn('proxy2 error', e.message || e); }
-  try{ const res = await fetch(PROXY3 + url); if (res.ok) return expectJson ? await res.json() : await res.text(); console.warn('proxy3 non-ok', res.status, url); }catch(e){ console.warn('proxy3 error', e.message || e); }
-  throw new Error('All fetch attempts failed: ' + url);
-}
-
-async function loadTopCoins(){
-  $('assetsList').innerHTML = '<div class="small">Loading top coins…</div>';
-  const cached = cacheGet('top100_v9');
-  if (cached){
-    coins = cached;
-    buildAssetsList();
-    setTimeout(()=> fetchTopCoins(true), 800);
-    return;
-  }
-  await fetchTopCoins(false);
-}
-
-async function fetchTopCoins(silent=false){
-  try{
-    let page = 1, per = 250, collected = [];
-    while (collected.length < MAX_COINS){
-      const url = `${COINGECKO}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${per}&page=${page}&price_change_percentage=24h,1h`;
-      const res = await fetchWithFallback(url, true);
-      if (!Array.isArray(res) || res.length === 0) break;
-      collected = collected.concat(res);
-      page++;
-      await sleep(POLITE_MS);
-    }
-    coins = collected.slice(0, MAX_COINS).map(c => ({
-      id: c.id,
-      symbol: (c.symbol||'').toLowerCase(),
-      name: c.name,
-      image: c.image,
-      price: c.current_price,
-      mcap: c.market_cap,
-      change24: c.price_change_percentage_24h
-    }));
-    coinMap = {};
-    coins.forEach(c => coinMap[c.symbol] = c);
-    cacheSet('top100_v9', coins, 180000);
-    buildAssetsList();
-    if (!silent) toast('Top coins loaded');
-  }catch(e){
-    console.error('fetchTopCoins fail', e);
-    $('assetsList').innerHTML = '<div class="small">Failed loading coins</div>';
-    toast('Top coins fetch failed');
-  }
-}
-
-function buildAssetsList(){
-  const node = $('assetsList'); node.innerHTML = '';
-  coins.forEach((c,i)=>{
-    const div = document.createElement('div'); div.className = 'assetRow';
-    div.innerHTML = `
-      <div class="assetLeft">
-        <div class="assetLogo"><img src="${c.image||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>
-        <div class="assetText">
-          <div class="assetName">${c.symbol.toUpperCase()} • ${c.name}</div>
-          <div class="small">${formatMcap(c.mcap)} • 24h: ${c.change24 ? c.change24.toFixed(2)+'%' : '-'}</div>
-        </div>
-      </div>
-      <div class="badge">#${i+1}</div>
-    `;
-    div.addEventListener('click', ()=> onAssetClick(c.symbol));
-    node.appendChild(div);
+// Example fetch functions (CoinGecko, influencers, news)
+async function loadAssets() {
+  const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=1&sparkline=false');
+  const data = await res.json();
+  const list = document.getElementById('assetList');
+  list.innerHTML = '';
+  data.forEach(asset => {
+    const li = document.createElement('li');
+    li.innerHTML = `<img src="${asset.image}" alt=""> ${asset.name} (${asset.symbol.toUpperCase()}) - $${asset.current_price.toLocaleString()} - MC: $${asset.market_cap.toLocaleString()}`;
+    li.onclick = () => loadChart(asset.id);
+    list.appendChild(li);
   });
 }
 
-async function onAssetClick(sym){
-  const s = sym.toLowerCase();
-  const coin = coinMap[s];
-  if (!coin) return toast('Coin not found');
-  selectedCoin = coin;
-  $('chartTitle').innerText = `${coin.symbol.toUpperCase()} • ${coin.name}`;
-  createOrResetChart();
-  candleSeries.setData([{ time: Math.floor(Date.now()/1000) - 3600*24, open:coin.price, high:coin.price, low:coin.price, close:coin.price }]);
-  try{
-    await loadCandlesAndIndicators(coin.id, parseInt($('tfSelect').value || 30));
-  }catch(e){
-    console.warn('candles load fail', e);
-    toast('Chart load partial');
-  }
-  $('btnRunMission').disabled = false;
-}
-
-function createOrResetChart(){
-  try{
-    if (tvChart && typeof tvChart.remove === 'function') {
-      try { tvChart.remove(); } catch(e) { console.warn('tvChart remove err', e); }
+let chartInstance;
+async function loadChart(assetId) {
+  const res = await fetch(`https://api.coingecko.com/api/v3/coins/${assetId}/market_chart?vs_currency=usd&days=30`);
+  const data = await res.json();
+  const labels = data.prices.map(p => new Date(p[0]).toLocaleDateString());
+  const prices = data.prices.map(p => p[1]);
+  const ctx = document.getElementById('mainChart').getContext('2d');
+  if (chartInstance) chartInstance.destroy();
+  chartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{ label: 'Price (USD)', data: prices, borderColor: 'blue', fill: false }]
     }
-  }catch(e){ console.warn('chart destroy', e); }
-  tvChart = null;
-  candleSeries = null;
-  ema9Series = null; ema21Series = null; ema50Series = null;
-  bbUpperSeries = null; bbLowerSeries = null;
-  const container = $('tvChart');
-  container.innerHTML = '';
-  const width = container.clientWidth || Math.round(window.innerWidth * 0.8);
-  const height = Math.max(300, container.clientHeight || Math.round(window.innerHeight * 0.48));
-  tvChart = LightweightCharts.createChart(container, {
-    width, height,
-    layout: { backgroundColor: 'transparent', textColor: '#071127' },
-    rightPriceScale: { borderColor: 'rgba(0,0,0,0.06)' },
-    timeScale: { borderColor: 'rgba(0,0,0,0.06)', timeVisible:true }
-  });
-  candleSeries = tvChart.addCandlestickSeries({ upColor:'#16a34a', downColor:'#ef4444', borderVisible:false, wickVisible:true });
-  ema9Series = tvChart.addLineSeries({ color:'#0ea5e9', lineWidth:1.6 });
-  ema21Series = tvChart.addLineSeries({ color:'#7c3aed', lineWidth:1.2 });
-  ema50Series = tvChart.addLineSeries({ color:'#f59e0b', lineWidth:1.2 });
-  bbUpperSeries = tvChart.addLineSeries({ color:'#94a3b8', lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed });
-  bbLowerSeries = tvChart.addLineSeries({ color:'#94a3b8', lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed });
-  function _resize(){ try{ tvChart.applyOptions({ width: container.clientWidth, height: Math.max(300, container.clientHeight) }); }catch(e){} }
-  window.removeEventListener('resize', _resize);
-  window.addEventListener('resize', _resize);
-}
-
-async function loadCandlesAndIndicators(coinId, days=30){
-  try{
-    let ohlc = null;
-    try { ohlc = await fetchWithFallback(`${COINGECKO}/coins/${encodeURIComponent(coinId)}/ohlc?vs_currency=usd&days=${days}`, true); } catch(e){ console.log('ohlc fail', e); }
-    let series = [];
-    if (Array.isArray(ohlc) && ohlc.length){
-      series = ohlc.map(i => ({ time: Math.floor(i[0]/1000), open:i[1], high:i[2], low:i[3], close:i[4] }));
-    } else {
-      const mc = await fetchWithFallback(`${COINGECKO}/coins/${encodeURIComponent(coinId)}/market_chart?vs_currency=usd&days=${days}&interval=hourly`, true);
-      if (mc && Array.isArray(mc.prices) && mc.prices.length){
-        const bars = buildOHLCFromPrices(mc.prices, 1);
-        series = bars.map(b => ({ time: Math.floor(b.x.getTime()/1000), open:b.o, high:b.h, low:b.l, close:b.c }) );
-      }
-    }
-    if (!series || series.length === 0){
-      candleSeries.setData([{ time: Math.floor(Date.now()/1000), open:selectedCoin.price, high:selectedCoin.price, low:selectedCoin.price, close:selectedCoin.price }]);
-      return;
-    }
-    candleSeries.setData(series);
-    const closes = series.map(s => s.close);
-    const ema9 = technicalindicators.EMA.calculate({ period:9, values:closes });
-    const ema21 = technicalindicators.EMA.calculate({ period:21, values:closes });
-    const ema50 = technicalindicators.EMA.calculate({ period:50, values:closes });
-    const bb = technicalindicators.BollingerBands.calculate({ period:20, stdDev:2, values:closes });
-    const rsi = technicalindicators.RSI.calculate({ period:14, values:closes });
-    const macd = technicalindicators.MACD.calculate({ values:closes, fastPeriod:12, slowPeriod:26, signalPeriod:9 });
-    function mapToSeries(arr){
-      const out = []; const offset = series.length - arr.length;
-      for (let i=0;i<series.length;i++){
-        const t = series[i].time;
-        const v = (i-offset >= 0) ? arr[i-offset] : null;
-        if (v !== null && v !== undefined) out.push({ time: t, value: v });
-      }
-      return out;
-    }
-    ema9Series.setData(mapToSeries(ema9));
-    ema21Series.setData(mapToSeries(ema21));
-    ema50Series.setData(mapToSeries(ema50));
-    if (bb && bb.length){
-      bbUpperSeries.setData(mapToSeries(bb.map(x => x.upper)));
-      bbLowerSeries.setData(mapToSeries(bb.map(x => x.lower)));
-    }
-    renderMiniLine('rsiMini', rsi, { min:0, max:100, color:'#7c3aed' });
-    renderMacdMini('macdMini', macd);
-    try { tvChart.timeScale().fitContent(); } catch(e) {}
-    produceCallouts(ema9, ema21, rsi, macd);
-  }catch(e){
-    console.error('loadCandlesAndIndicators error', e);
-    throw e;
-  }
-}
-
-function buildOHLCFromPrices(pricesArr, hoursPerBar=1){
-  if (!pricesArr || pricesArr.length === 0) return [];
-  const msPerBar = hoursPerBar * 3600 * 1000;
-  const bars = [];
-  let cur = null;
-  for (let i=0;i<pricesArr.length;i++){
-    const ts = pricesArr[i][0], p = pricesArr[i][1];
-    if (!cur){
-      const start = Math.floor(ts / msPerBar) * msPerBar;
-      cur = { ts: start, o: p, h: p, l: p, c: p };
-    } else {
-      if (ts - cur.ts < msPerBar){
-        cur.h = Math.max(cur.h, p);
-        cur.l = Math.min(cur.l, p);
-        cur.c = p;
-      } else {
-        bars.push({ x: new Date(cur.ts), o:cur.o, h:cur.h, l:cur.l, c:cur.c });
-        const start = Math.floor(ts / msPerBar) * msPerBar;
-        cur = { ts: start, o: p, h: p, l: p, c: p };
-      }
-    }
-  }
-  if (cur) bars.push({ x: new Date(cur.ts), o:cur.o, h:cur.h, l:cur.l, c:cur.c });
-  return bars;
-}
-
-function renderMiniLine(containerId, values, opts={}){
-  try{
-    if (miniChartRegistry[containerId] && typeof miniChartRegistry[containerId].remove === 'function') {
-      try { miniChartRegistry[containerId].remove(); } catch(e){ console.warn('mini remove fail', e); }
-      delete miniChartRegistry[containerId];
-    }
-    const el = $(containerId); el.innerHTML = '';
-    const wrapper = document.createElement('div'); wrapper.style.width = '100%'; wrapper.style.height = '100%'; el.appendChild(wrapper);
-    const chart = LightweightCharts.createChart(wrapper, { width: wrapper.clientWidth, height: wrapper.clientHeight, layout:{ backgroundColor:'transparent', textColor:'#071127' }, timeScale:{ visible:false }, rightPriceScale:{ visible:false } });
-    miniChartRegistry[containerId] = chart;
-    const s = chart.addLineSeries({ color: opts.color || '#0ea5e9', lineWidth:1.4 });
-    const data = (values||[]).map((v,i)=>({ time:i, value:v })).filter(x=>x.value!==null && x.value!==undefined);
-    s.setData(data);
-  }catch(e){ console.warn('mini line render fail', e); }
-}
-
-function renderMacdMini(containerId, macdArr){
-  try{
-    if (miniChartRegistry[containerId] && typeof miniChartRegistry[containerId].remove === 'function') {
-      try { miniChartRegistry[containerId].remove(); } catch(e){ console.warn('mini remove fail', e); }
-      delete miniChartRegistry[containerId];
-    }
-    const el = $(containerId); el.innerHTML = '';
-    const wrapper = document.createElement('div'); wrapper.style.width='100%'; wrapper.style.height='100%'; el.appendChild(wrapper);
-    const chart = LightweightCharts.createChart(wrapper, { width: wrapper.clientWidth, height: wrapper.clientHeight, layout:{ backgroundColor:'transparent', textColor:'#071127' }, timeScale:{ visible:false }, rightPriceScale:{ visible:false } });
-    miniChartRegistry[containerId] = chart;
-    const hist = chart.addHistogramSeries({ color:'#16a34a', priceFormat:{ type:'volume' } });
-    const histData = (macdArr||[]).map((m,i)=>({ time:i, value: m ? m.histogram : 0 }));
-    hist.setData(histData);
-    const sig = chart.addLineSeries({ color:'#0ea5e9', lineWidth:1 });
-    const macdLine = chart.addLineSeries({ color:'#7c3aed', lineWidth:1 });
-    const sigData = (macdArr||[]).map((m,i)=>({ time:i, value: m ? m.signal : null })).filter(x=>x.value!==null);
-    const macdData = (macdArr||[]).map((m,i)=>({ time:i, value: m ? m.MACD : null })).filter(x=>x.value!==null);
-    sig.setData(sigData);
-    macdLine.setData(macdData);
-  }catch(e){ console.warn('macd mini fail', e); }
-}
-
-function produceCallouts(ema9, ema21, rsi, macd){
-  const calls = [];
-  if (ema9.length >= 2 && ema21.length >= 2){
-    const a = ema9[ema9.length-1], pa = ema9[ema9.length-2];
-    const b = ema21[ema21.length-1], pb = ema21[ema21.length-2] || b;
-    if (a > b && pa <= pb) calls.push('EMA9 crossed above EMA21 — bullish');
-    if (a < b && pa >= pb) calls.push('EMA9 crossed below EMA21 — bearish');
-  }
-  if (rsi.length){
-    const last = rsi[rsi.length-1];
-    if (last > 70) calls.push('RSI > 70 — overbought');
-    if (last < 30) calls.push('RSI < 30 — oversold');
-  }
-  if (macd.length){
-    const hist = macd.map(m => m.histogram);
-    const lastH = hist[hist.length-1] || 0, prevH = hist[hist.length-2] || 0;
-    if (lastH > prevH * 1.8 && lastH > 0) calls.push('MACD histogram rising — momentum building');
-    if (lastH < prevH * 1.8 && lastH < 0) calls.push('MACD dropping — momentum weakening');
-  }
-  $('chartSubtitle').innerText = calls.slice(0,3).join(' • ') || 'Indicators stable';
-  calls.slice(0,3).forEach(c => archive.unshift({ type:'callout', coin: selectedCoin ? selectedCoin.symbol : '', text: c, ts: Date.now() }));
-  $('btnOpenArchive').innerText = 'Archive (' + archive.length + ')';
-}
-
-/* People & News */
-const peopleSeed = [
-"Elon Musk","Vitalik Buterin","Changpeng Zhao","Michael Saylor","Cathie Wood","Larry Fink","Warren Buffett","Jamie Dimon",
-"Bill Gates","Jeff Bezos","Andreas Antonopoulos","Naval Ravikant","Marc Andreessen","Ben Horowitz","Ray Dalio","Peter Thiel",
-"Mark Cuban","Chamath Palihapitiya","Sam Altman","Jensen Huang","Tim Cook","Sundar Pichai","Christine Lagarde","Jerome Powell",
-"Janet Yellen","Xi Jinping","Narendra Modi","Vladimir Putin","Emmanuel Macron","Olaf Scholz","Mary Barra","Sheryl Sandberg",
-"Reed Hastings","Susan Wojcicki","Michael Bloomberg","Larry Page","Sergey Brin","Steve Cohen","Daniel Loeb","Robert F. Smith"
-];
-
-function initPeople(){
-  people = [];
-  for (let i=0;i<PEOPLE_COUNT;i++){
-    const name = peopleSeed[i] || ('Influencer ' + (i+1));
-    const p = { id: 'p'+(i+1), name: name, conn: guessConnection(name), img: null, news: [], political: { D:0, R:0, U:100, evidence:[] } };
-    people.push(p);
-  }
-  renderPeopleList();
-  setTimeout(()=> enrichPeopleBatch(0), 700);
-}
-
-function guessConnection(name){
-  const map = { "Elon Musk":"Tesla / SpaceX / X", "Vitalik Buterin":"Ethereum", "Changpeng Zhao":"Binance", "Michael Saylor":"MicroStrategy", "Cathie Wood":"ARK Invest", "Larry Fink":"BlackRock", "Warren Buffett":"Berkshire Hathaway", "Jamie Dimon":"JPMorgan" };
-  return map[name] ? ("Closest connection: " + map[name]) : "Closest connection: —";
-}
-
-function renderPeopleList(){
-  const node = $('peopleList'); node.innerHTML = '';
-  for (let i=0;i<people.length;i++){
-    const p = people[i];
-    const el = document.createElement('div'); el.className = 'personCard'; el.id = 'card-'+p.id;
-    el.innerHTML = `
-      <div class="personThumb"><img id="img-${p.id}" src="${p.img||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>
-      <div class="personMeta">
-        <div style="font-weight:700">${p.name}</div>
-        <div class="small" id="conn-${p.id}" style="margin-top:6px">${p.conn}</div>
-        <div class="small" id="news-${p.id}" style="margin-top:8px">Loading headlines...</div>
-        <div class="small" id="pol-${p.id}" style="margin-top:8px"></div>
-      </div>
-    `;
-    el.addEventListener('click', ()=> onPersonClick(p.id));
-    node.appendChild(el);
-  }
-  $('newsTopStatus').innerText = 'People list rendered — fetching headlines now';
-}
-
-async function enrichPeopleBatch(startIndex){
-  const batch = 6;
-  for (let i=startIndex; i<Math.min(people.length, startIndex + batch); i++){
-    const p = people[i];
-    try{
-      const wiki = await fetchWithFallback(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(p.name)}`, true);
-      if (wiki && wiki.thumbnail && wiki.thumbnail.source) p.img = wiki.thumbnail.source;
-    }catch(e){}
-    try{
-      const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(p.name)}+when:3d`;
-      const xml = await fetchWithFallback(rssUrl, false);
-      if (xml){
-        const dom = new DOMParser().parseFromString(xml, 'text/xml');
-        const items = dom.querySelectorAll('item');
-        p.news = [];
-        for (let k=0;k<items.length && p.news.length < 3; k++){
-          const it = items[k];
-          const title = it.querySelector('title')?.textContent || '';
-          const link = it.querySelector('link')?.textContent || '';
-          const desc = it.querySelector('description')?.textContent || '';
-          let img = null;
-          try {
-            const m = desc && desc.match(/<img[^>]+src=["']([^"']+)["']/i);
-            if (m) img = m[1];
-          }catch(e){}
-          if (!img && link){
-            try{
-              const pageHtml = await fetchWithFallback(link, false);
-              if (pageHtml){
-                const mo = pageHtml.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) || pageHtml.match(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i);
-                if (mo) img = mo[1];
-              }
-            }catch(e){}
-          }
-          p.news.push({ title, link, img });
-        }
-      }
-    }catch(e){ console.warn('rss fetch fail for', p.name, e); }
-    inferPoliticalSignals(p);
-    const newsEl = $('news-'+p.id);
-    if (newsEl){
-      if (p.news && p.news.length){
-        newsEl.innerHTML = p.news.map(n => `<div style="margin-top:6px"><a href="${n.link}" target="_blank" style="color:var(--ink);text-decoration:none">${n.title}</a></div>`).join('');
-        if (!p.img){
-          const firstWithImg = p.news.find(n => n.img);
-          if (firstWithImg && firstWithImg.img) p.img = firstWithImg.img;
-        }
-      } else {
-        newsEl.innerHTML = '<div class="small">No recent headlines</div>';
-      }
-    }
-    if (!p.img) p.img = svgPlaceholderForName(p.name);
-    if (p.img){
-      const imgEl = document.getElementById('img-'+p.id);
-      if (imgEl) { imgEl.src = p.img; imgEl.style.display = 'block'; }
-    }
-    const polEl = $('pol-'+p.id); if (polEl) polEl.innerText = politicalSummary(p);
-    await sleep(POLITE_MS);
-  }
-  renderNewsGrid();
-  if (startIndex + batch < people.length) setTimeout(()=> enrichPeopleBatch(startIndex + batch), 600);
-  else $('newsTopStatus').innerText = 'Headlines loaded for people (progressive)';
-}
-
-function svgPlaceholderForName(name){
-  const initials = name.split(' ').slice(0,2).map(s => s[0] || '').join('').toUpperCase() || 'I';
-  const svg = `<svg xmlns='http://www.w3.org/2000/svg' width='200' height='120'><rect width='100%' height='100%' fill='#eef4fb'/><text x='50%' y='50%' dominant-baseline='middle' text-anchor='middle' font-size='44' fill='#6b7280' font-family='Inter,Arial'>${initials}</text></svg>`;
-  return 'data:image/svg+xml;utf8,' + encodeURIComponent(svg);
-}
-
-function inferPoliticalSignals(p){
-  const text = (p.news || []).map(n => (n.title||'' ) + ' ' + (n.link||'') ).join(' ').toLowerCase();
-  const evidence = [];
-  let dem = 0, rep = 0;
-  const demKeywords = ['biden','democrat','democratic','liberal','progressive','endorsed biden','donated to democratic'];
-  const repKeywords = ['trump','republican','gop','conservative','right-wing','endorsed trump','donated to republican'];
-  demKeywords.forEach(k => { if (text.includes(k)) { dem += 1; evidence.push(k); }});
-  repKeywords.forEach(k => { if (text.includes(k)) { rep += 1; evidence.push(k); }});
-  if (text.includes('white house') || text.includes('administration')) dem += 0.5;
-  if (text.includes('congress') || text.includes('senate')) rep += 0.2;
-  const total = dem + rep;
-  if (total === 0) {
-    p.political = { D:0, R:0, U:100, evidence:[] };
-  } else {
-    const D = Math.round((dem/total)*100);
-    const R = Math.round((rep/total)*100);
-    const U = Math.max(0, 100 - D - R);
-    p.political = { D, R, U, evidence };
-  }
-}
-
-function politicalSummary(p){
-  if (!p.political) return '';
-  const pol = p.political;
-  if (pol.U >= 90) return 'Political leaning: Unknown';
-  return `Political: D ${pol.D}% • R ${pol.R}% • U ${pol.U}% • Evidence: ${pol.evidence.slice(0,3).join(', ') || '—'}`;
-}
-
-function renderNewsGrid(){
-  const grid = $('newsGrid'); grid.innerHTML = '';
-  const top = people.slice(0, Math.min(12, people.length));
-  top.forEach(p => {
-    const n = (p.news && p.news[0]) || { title: p.name + ' — no headlines', link:'#', img:null };
-    const card = document.createElement('div'); card.className = 'newsCard';
-    card.innerHTML = `
-      <img class="newsThumb" src="${n.img || ''}" onerror="this.style.display='none'">
-      <div class="newsMeta">
-        <div class="newsTitle"><a href="${n.link}" target="_blank" style="color:var(--ink); text-decoration:none">${n.title}</a></div>
-        <div class="newsSource small">${p.name} • ${n.link}</div>
-      </div>
-    `;
-    grid.appendChild(card);
   });
 }
 
-function onPersonClick(pid){
-  const p = people.find(x=>x.id === pid);
-  if (!p) return;
-  const steps = [
-    `1) Check indicator overlay for current selected asset (EMA9/21/50, RSI, MACD).`,
-    `2) Read top 2 headlines for ${p.name} and classify sentiment.`,
-    `3) Check DexScreener liquidity if token references appear.`,
-    `4) Build risk checklist & simulated ladder (no execution).`
+async function loadInfluencers() {
+  const influencers = [
+    { name: 'Elon Musk', img: 'https://via.placeholder.com/50', news: [] },
+    { name: 'CZ Binance', img: 'https://via.placeholder.com/50', news: [] }
   ];
-  archive.unshift({ type:'mission', person: p.name, asset: selectedCoin ? selectedCoin.symbol : null, steps, ts: Date.now() });
-  toast('Mission created (simulated) for ' + p.name);
+  const container = document.getElementById('influencerList');
+  influencers.forEach(person => {
+    const card = document.createElement('div');
+    card.className = 'influencer-card';
+    card.innerHTML = `<img src="${person.img}" alt=""><div><h3>${person.name}</h3></div>`;
+    container.appendChild(card);
+  });
 }
 
-function openArchive(){
-  alert('Archive entries: ' + archive.length + '\\nOpen console to inspect archive for detail.');
-  console.log('FIVEVISION ARCHIVE', archive);
+async function loadNews() {
+  const newsItems = [
+    { title: 'Market rallies on positive CPI data', img: 'https://via.placeholder.com/80x50' },
+    { title: 'Bitcoin dips below $30k amid global uncertainty', img: 'https://via.placeholder.com/80x50' }
+  ];
+  const container = document.getElementById('newsList');
+  newsItems.forEach(n => {
+    const div = document.createElement('div');
+    div.innerHTML = `<img src="${n.img}" class="news-img" alt=""> ${n.title}`;
+    container.appendChild(div);
+  });
 }
 
-function formatMcap(n){
-  if (!n) return '-';
-  if (n > 1e12) return (n/1e12).toFixed(2) + 'T';
-  if (n > 1e9) return (n/1e9).toFixed(2) + 'B';
-  if (n > 1e6) return (n/1e6).toFixed(2) + 'M';
-  return '$' + Number(n).toLocaleString();
-}
-
-/* Events and boot */
-document.getElementById('btnRefresh').addEventListener('click', ()=> { loadTopCoins(); toast('Refreshing top coins...'); });
-document.getElementById('btnLoadPeople').addEventListener('click', ()=> { initPeople(); toast('Loading people...'); });
-document.getElementById('btnOpenArchive').addEventListener('click', ()=> { openArchive(); });
-document.getElementById('btnRunMission').addEventListener('click', ()=> { if (!selectedCoin) return toast('Select asset first'); toast('Mission executed (simulated)'); });
-
-(async function boot(){
-  toast('Initializing dashboard — please wait (first content <20s typical)');
-  await loadTopCoins();
-  initPeople();
-  if (coins && coins.length){
-    setTimeout(()=> onAssetClick(coins[0].symbol), 600);
-  }
-})();
+loadAssets();
+loadInfluencers();
+loadNews();
 </script>
-"""
+</body>
+</html>
 
-# Now determine how many lines core occupies, then append no-op JS functions to reach exactly 10000 lines.
-import io, os, textwrap, math, sys
-
-# We'll create file content with core, then expansion, then closing tags if needed.
-core_lines = core.splitlines()
-core_line_count = len(core_lines)
-
-# Target total lines
-TARGET = 10000
-
-# We'll add an expansion script block with many small no-op functions. Each function is 3 lines typically plus spacing.
-# But to control exact line count, we'll append lines explicitly.
-expansion_header = "<!-- EXPANSION BLOCK START - noop functions to reach exact 10,000 lines -->\n<script>\n"
-expansion_footer = "\n</script>\n<!-- EXPANSION BLOCK END -->\n</body>\n</html>\n"
-
-expansion_header_lines = expansion_header.splitlines()
-expansion_footer_lines = expansion_footer.splitlines()
-
-current = core_line_count + len(expansion_header_lines) + len(expansion_footer_lines)
-remaining = TARGET - current
-
-if remaining < 0:
-    raise RuntimeError(f"Core exceeds target lines: core {core_line_count}, header+footer {len(expansion_header_lines)+len(expansion_footer_lines)}, total {current} > {TARGET}")
-
-# We'll craft noop functions each occupying 4 lines: function signature, comment, return null, closing brace.
-# That means each function contributes 4 lines. Compute count needed.
-func_lines_per = 4
-func_count = remaining // func_lines_per
-leftover_lines = remaining - func_count * func_lines_per
-
-# We'll handle leftover lines by adding simple single-line comments to reach exact count.
-exp_lines = []
-for i in range(1, func_count+1):
-    name = f"__noop_func_{i:05d}"
-    exp_lines.append(f"function {name}() {{")
-    exp_lines.append(f"  // noop function #{i}")
-    exp_lines.append("  return null;")
-    exp_lines.append("}")
-# leftover
-for j in range(leftover_lines):
-    exp_lines.append(f"// filler line {j+1}")
-
-# Build final content
-final_lines = core_lines + expansion_header_lines + exp_lines + expansion_footer_lines
-
-# Verify final count
-final_count = len(final_lines)
-if final_count != TARGET:
-    # As a safety, if mismatch, adjust by adding/removing filler comments.
-    diff = TARGET - final_count
-    if diff > 0:
-        final_lines = final_lines[:-len(expansion_footer_lines)] + (["// padding"] * diff) + expansion_footer_lines
-    elif diff < 0:
-        # remove extra filler comments if any
-        final_lines = final_lines[:diff] + expansion_footer_lines  # diff negative
-    final_count = len(final_lines)
-
-# Final check
-if final_count != TARGET:
-    raise RuntimeError(f"Unable to reach exact target lines. final_count={final_count} target={TARGET}")
-
-# Write to file
-out_path = "/mnt/data/index_10000_lines.html"
-with open(out_path, "w", encoding="utf-8") as f:
-    f.write("\n".join(final_lines))
-
-# Output summary
-size = os.path.getsize(out_path)
-print(f"Wrote {out_path} ({final_count} lines, {size} bytes)")
-
-# Provide download link
-display_path = out_path
-print(f"Download path: sandbox:{display_path}")
 
 
 
