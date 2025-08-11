@@ -1,445 +1,370 @@
 <!doctype html>
-<!--
-  Five-Vision Intelligence - Single File Dashboard
-  - Author: GPT-5 Thinking mini (assistant)
-  - Purpose: Single-file, client-only intelligence dashboard implementing:
-      Vision 1: Real-Time Intelligence (Top 100 crypto list)
-      Vision 2: AI Command Center (mission synth)
-      Vision 3: Shadow Archive (searchable)
-      Vision 4: Market Radar (anomaly detection)
-      Vision 5: Human Network (200 people always visible)
-  - Features:
-      * Candlestick chart (TradingView Lightweight Charts) with EMA9/EMA21/EMA50, Bollinger Bands, ATR, RSI (subpanel), MACD (subpanel)
-      * Progressive loading for 200 people and their latest 3 headlines (<24h)
-      * Robust fetch -> fallback to proxy(s) (allorigins + codetabs)
-      * Local archive and rule engine (IF-THEN simulator)
-      * Soft cloudy UI (no blinding white), transparent scrollbars
-      * No backend, no auto-trading (simulation only)
-  - Important: First load progressive; give 30-90s to populate all news/people.
--->
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Five-Vision Intelligence — Single File</title>
+<title>Five-Vision Intelligence — Vertical Layout (News ↑ Chart ↓ Prices)</title>
 
-<!-- Fonts -->
+<!-- Fonts & libs -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
-
-<!-- CDN Libraries -->
-<!-- Lightweight Charts (better rendering, less canvas-reuse headaches) -->
 <script src="https://unpkg.com/lightweight-charts@3.8.0/dist/lightweight-charts.standalone.production.js"></script>
-<!-- technicalindicators for EMA/RSI/MACD/BB/ATR calculations -->
 <script src="https://unpkg.com/technicalindicators@3.0.3/dist/browser.js"></script>
 
 <style>
   :root{
-    --bgA:#eef6fb;
-    --bgB:#f6fbff;
-    --panel:#ffffffee;
-    --muted:#6b7280;
-    --ink:#071127;
-    --accent:#0ea5e9;
-    --glass-border: rgba(7,17,34,0.06);
-    --card-shadow: 0 10px 30px rgba(7,15,25,0.06);
+    --bgA:#f5f8fb; --bgB:#f8fbfe; --panel:#ffffffee; --muted:#6b7280; --ink:#071127; --accent:#0ea5e9;
+    --glass: rgba(7,17,34,0.04); --card-shadow: 0 10px 30px rgba(7,15,25,0.05);
   }
-  html,body{height:100%;margin:0;background:linear-gradient(160deg,var(--bgA),var(--bgB));font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:var(--ink);overflow:hidden}
-  /* animated soft clouds layer */
-  body::before{ content:""; position:fixed; inset:0; pointer-events:none; background: radial-gradient(circle at 10% 20%, rgba(255,255,255,0.45), transparent 12%), radial-gradient(circle at 80% 80%, rgba(240,248,255,0.35), transparent 18%); filter: blur(30px) saturate(110%); opacity:0.95; animation: drift 36s linear infinite; mix-blend-mode:overlay; }
-  @keyframes drift { 0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)} }
+  html,body{height:100%;margin:0;background:linear-gradient(160deg,var(--bgA),var(--bgB));font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial;color:var(--ink);-webkit-font-smoothing:antialiased}
+  body::before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(circle at 10% 20%, rgba(255,255,255,0.45), transparent 12%),radial-gradient(circle at 80% 80%, rgba(240,248,255,0.35), transparent 18%);filter:blur(22px) saturate(110%);opacity:0.9;mix-blend-mode:overlay;animation:drift 30s linear infinite}
+  @keyframes drift{0%{transform:translateY(0)}50%{transform:translateY(-6px)}100%{transform:translateY(0)}}
 
-  /* Layout */
-  #left { position:absolute; left:18px; top:18px; width:420px; bottom:18px; padding:18px; border-radius:14px; background:var(--panel); border:1px solid var(--glass-border); box-shadow:var(--card-shadow); overflow:auto; }
-  #center { position:absolute; left:460px; right:540px; top:18px; bottom:18px; border-radius:14px; background:transparent; display:flex; flex-direction:column; overflow:hidden; }
-  #right { position:absolute; right:18px; top:18px; width:520px; bottom:18px; padding:18px; border-radius:14px; background:var(--panel); border:1px solid var(--glass-border); box-shadow:var(--card-shadow); overflow:auto; }
+  /* Layout: vertical columns stacked for desktop, single column for mobile */
+  .container{display:flex;flex-direction:column;height:100vh;padding:12px;gap:12px;box-sizing:border-box}
+  .top, .middle, .bottom{border-radius:12px;background:var(--panel);border:1px solid var(--glass);box-shadow:var(--card-shadow);padding:12px;overflow:auto}
+  .top{flex:0 0 28%; min-height:220px}
+  .middle{flex:1 1 auto; min-height:320px; display:flex; flex-direction:column}
+  .bottom{flex:0 0 28%; min-height:180px}
 
-  h1{margin:0;font-weight:800;font-size:18px}
+  /* header */
+  .titlebar{display:flex;align-items:center;justify-content:space-between;gap:12px}
+  h1{margin:0;font-size:18px;font-weight:800}
   .small{font-size:13px;color:var(--muted)}
-  .module{margin-top:12px;padding:10px;border-radius:12px;background:transparent;border:1px solid rgba(7,17,34,0.02)}
-  .pill{background:transparent;padding:8px 10px;border-radius:10px;border:1px solid rgba(7,17,34,0.05);cursor:pointer;font-weight:700;color:var(--ink)}
-  .muted-ink{color:var(--muted)}
 
-  /* scrollbar style: invisible until hover */
-  *::-webkit-scrollbar{width:10px;height:10px}
-  *::-webkit-scrollbar-track{background:transparent}
-  *::-webkit-scrollbar-thumb{background:transparent;border-radius:10px;border:2px solid transparent}
-  *:hover::-webkit-scrollbar-thumb{background:rgba(7,17,34,0.05)}
+  /* news layout */
+  .news-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px}
+  .news-card{display:flex;gap:10px;padding:10px;border-radius:10px;background:#fff;border:1px solid rgba(7,17,34,0.02);align-items:flex-start}
+  .news-thumb{width:120px;height:72px;border-radius:8px;object-fit:cover;background:#eef4fb}
 
-  /* assets list */
-  .asset-row{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;margin-bottom:8px;transition:all 130ms ease}
+  /* chart area */
+  #chartHeader{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  #tvChart{width:100%;height:60%;background:transparent;border-radius:8px;overflow:hidden}
+  .indicators{display:flex;gap:8px;margin-top:8px}
+  .indBox{flex:1;background:#fff;border-radius:8px;padding:8px;border:1px solid rgba(7,17,34,0.02);min-height:120px}
+
+  /* bottom: assets and people */
+  .row{display:flex;gap:12px}
+  .col{flex:1;min-width:0}
+  .panelList{max-height:320px;overflow:auto;padding-right:6px}
+  .asset-row{display:flex;align-items:center;justify-content:space-between;padding:10px;border-radius:10px;margin-bottom:8px;transition:all 120ms}
   .asset-row:hover{background:rgba(14,165,233,0.03);cursor:pointer}
-  .asset-left{display:flex;align-items:center;gap:12px}
-  .asset-logo{width:44px;height:44px;border-radius:10px;background:#fff;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid rgba(7,17,34,0.03)}
-  .asset-meta{display:flex;flex-direction:column}
-  .asset-name{font-weight:700}
-  .asset-sub{font-size:12px;color:var(--muted)}
+  .asset-left{display:flex;align-items:center;gap:10px}
+  .asset-logo{width:40px;height:40px;border-radius:8px;background:#fff;border:1px solid rgba(7,17,34,0.03);overflow:hidden;display:flex;align-items:center;justify-content:center}
+  .person-card{display:flex;gap:10px;padding:8px;border-radius:10px;margin-bottom:8px;background:#fff;border:1px solid rgba(7,17,34,0.02)}
+  .person-thumb{width:52px;height:52px;border-radius:8px;background:#eef4fb;overflow:hidden;display:flex;align-items:center;justify-content:center}
 
-  /* center chart area */
-  #chartHeader{display:flex;justify-content:space-between;align-items:center;padding:14px 16px;border-bottom:1px solid rgba(7,17,34,0.02)}
-  #chartArea{flex:1;padding:12px;display:flex;flex-direction:column;gap:8px}
-  #chartBox{flex:1;border-radius:12px;background:linear-gradient(180deg,#ffffff,#fbfdff);border:1px solid rgba(7,17,34,0.02);display:flex;flex-direction:column;overflow:hidden;position:relative}
+  /* UI pills */
+  .pill{background:transparent;padding:8px 10px;border-radius:10px;border:1px solid rgba(7,17,34,0.04);cursor:pointer;font-weight:700}
 
-  /* canvas container used by Lightweight charts */
-  #tvChart{ width:100%; height:58%; background:transparent; }
-  #indicatorsPanel{ height:42%; display:flex; gap:8px; padding:8px; flex-direction:row; }
+  /* scrollbars */
+  *::-webkit-scrollbar{width:9px;height:9px}
+  *::-webkit-scrollbar-track{background:transparent}
+  *::-webkit-scrollbar-thumb{background:transparent;border-radius:9px}
+  *:hover::-webkit-scrollbar-thumb{background:rgba(7,17,34,0.06)}
 
-  .indicatorBox{ flex:1; border-radius:10px; background:#fff; border:1px solid rgba(7,17,34,0.02); padding:8px; box-shadow:var(--card-shadow); overflow:hidden }
-
-  /* callouts */
-  .callouts{ position:absolute; left:26px; top:28px; z-index:20; display:flex; flex-direction:column; gap:8px; pointer-events:none }
-  .callout{ background:linear-gradient(180deg,#ffffff,#f4fbff); padding:8px 12px; border-radius:10px; border:1px solid rgba(7,17,34,0.04); box-shadow:0 10px 24px rgba(7,15,25,0.06); font-weight:700 }
-
-  /* right panels (news & people) */
-  .floating-news{ display:flex; gap:12px; align-items:center; padding:10px; border-radius:12px; margin-bottom:10px; background:#fff; border:1px solid rgba(7,17,34,0.02) }
-  .news-thumb{ width:120px; height:70px; border-radius:8px; object-fit:cover }
-  .person-card{ display:flex; gap:12px; padding:10px; border-radius:12px; margin-bottom:10px; background:linear-gradient(180deg,#fff,#fbfdff); border:1px solid rgba(7,17,34,0.02) }
-  .person-thumb{ width:64px; height:64px; border-radius:12px; overflow:hidden; background:#eef6fb; display:flex; align-items:center; justify-content:center }
-
-  #toast{ position:fixed; left:50%; transform:translateX(-50%); bottom:22px; z-index:9999; background:var(--ink); color:#fff; padding:10px 14px; border-radius:10px; display:none }
-  .badge{font-size:12px;padding:6px 8px;border-radius:8px;background:rgba(7,17,34,0.03)}
+  /* responsive stacking for small screens */
+  @media (max-width:900px){
+    .top{flex:0 0 32%}
+    .bottom{flex:0 0 32%}
+    .news-grid{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
+  }
+  @media (max-width:560px){
+    .container{padding:8px}
+    .top{flex:0 0 36%}
+    .bottom{flex:0 0 36%}
+    .news-thumb{width:96px;height:60px}
+  }
 </style>
 </head>
 <body>
-  <!-- LEFT: Vision 1 + action panels -->
-  <div id="left">
-    <h1>Five-Vision Intelligence</h1>
-    <div class="small muted-ink">Realtime client-only dashboard — Top 100 crypto, 200 influencers, layered indicators, news, archive & rule engine</div>
-
-    <!-- Vision 1: Market list -->
-    <div class="module">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 1 — Real-Time Intelligence</strong><div class="small">Top 100 (CoinGecko)</div></div>
-        <div><button id="btnRefresh" class="pill">Refresh</button></div>
+  <div class="container">
+    <!-- TOP: News (Vision 1 / People highlights) -->
+    <div class="top" id="topPanel">
+      <div class="titlebar">
+        <div>
+          <h1>Five-Vision Intelligence</h1>
+          <div class="small">News & People — fast visible load • top 40 influencers</div>
+        </div>
+        <div style="display:flex;gap:8px">
+          <button id="btnRefresh" class="pill">Refresh</button>
+          <button id="btnLoadPeople" class="pill">Load People</button>
+          <button id="btnOpenArchive" class="pill">Archive</button>
+        </div>
       </div>
-      <div id="marketStatus" class="small" style="margin-top:8px">Loading top 100…</div>
-      <div id="assetsList" style="margin-top:10px; max-height:420px; overflow:auto"></div>
+
+      <div style="margin-top:10px" id="newsTopStatus" class="small">Loading top headlines for top influencers…</div>
+      <div class="news-grid" id="newsGrid" style="margin-top:10px"></div>
     </div>
 
-    <!-- Vision 2: AI Command Center -->
-    <div class="module">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 2 — AI Command Center</strong><div class="small">Mission mode synthesizes a step-by-step plan</div></div>
-        <div><button id="btnRunMission" class="pill" disabled>Run Mission</button></div>
+    <!-- MIDDLE: Chart (Lightweight) + indicators -->
+    <div class="middle" id="middlePanel">
+      <div id="chartHeader">
+        <div>
+          <div id="chartTitle" style="font-weight:800">Select an asset — chart placeholder will appear instantly</div>
+          <div id="chartSubtitle" class="small">EMA9/21/50 • Bollinger Bands • RSI • MACD</div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <select id="tfSelect" class="pill">
+            <option value="1">1D</option>
+            <option value="7">7D</option>
+            <option value="30" selected>30D</option>
+          </select>
+          <select id="chartMode" class="pill"><option value="candles">Candles</option><option value="line">Line</option></select>
+          <button id="btnRunMission" class="pill" disabled>Run Mission</button>
+        </div>
       </div>
-      <div id="aiPanel" class="small" style="margin-top:8px">Locked — select an asset or influencer</div>
-    </div>
 
-    <!-- Vision 3: Shadow Archive -->
-    <div class="module">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 3 — Shadow Archive</strong><div class="small">Search triggered signals, missions, rule history</div></div>
-        <div><button id="btnOpenArchive" class="pill">Open</button></div>
-      </div>
-      <div id="archivePanel" class="small" style="margin-top:8px">No entries yet</div>
-    </div>
+      <div id="tvChart"></div>
 
-    <!-- Vision 4: Market Radar -->
-    <div class="module">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 4 — Market Radar</strong><div class="small">Anomaly scanner</div></div>
-        <div><button id="btnScanRadar" class="pill">Scan Radar</button></div>
-      </div>
-      <div id="radarPanel" class="small" style="margin-top:8px">Idle</div>
-    </div>
-
-    <!-- Vision 5 quick preview -->
-    <div class="module">
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <div><strong>Vision 5 — Human Network</strong><div class="small">200 influencers — always visible on right</div></div>
-        <div><button id="btnLoadPeople" class="pill">Load People</button></div>
-      </div>
-      <div id="peoplePreview" class="small" style="margin-top:8px">People not loaded</div>
-    </div>
-
-    <div style="margin-top:12px" class="small">Solana (read-only): <strong id="solAddr">J6ePpCwsAffaDE2tPfuG6k1xwqsSDr7kbs1DK8iaUbCp</strong></div>
-    <div style="margin-top:6px"><button id="btnCheckWallet" class="pill">Check Wallet</button></div>
-  </div>
-
-  <!-- CENTER: Chart + indicators -->
-  <div id="center">
-    <div id="chartHeader">
-      <div><div id="chartTitle" style="font-weight:800">Select an asset</div><div id="chartSubtitle" class="small">Price / indicators / callouts</div></div>
-      <div style="display:flex;gap:8px;align-items:center">
-        <select id="tfSelector" class="pill"><option value="1">1D</option><option value="7">7D</option><option value="30" selected>30D</option></select>
-        <select id="chartMode" class="pill"><option value="candles" selected>Candles</option><option value="line">Line</option></select>
-        <button id="btnToggleInd" class="pill">Toggle Indicators</button>
+      <div class="indicators" style="margin-top:10px">
+        <div class="indBox">
+          <div style="font-weight:800">RSI (14)</div>
+          <div id="rsiMini" style="height:120px;margin-top:8px"></div>
+        </div>
+        <div class="indBox">
+          <div style="font-weight:800">MACD (12,26,9)</div>
+          <div id="macdMini" style="height:120px;margin-top:8px"></div>
+        </div>
       </div>
     </div>
 
-    <div id="chartArea">
-      <div id="chartBox">
-        <div class="callouts" id="calloutContainer"></div>
-        <div id="tvChart"></div>
-        <div id="indicatorsPanel">
-          <div class="indicatorBox"><div style="font-weight:800">RSI (14)</div><div id="rsiChartContainer" style="height:calc(100% - 28px)"></div></div>
-          <div class="indicatorBox"><div style="font-weight:800">MACD (12,26,9)</div><div id="macdChartContainer" style="height:calc(100% - 28px)"></div></div>
+    <!-- BOTTOM: Assets list & People list (Vision 5 always visible) -->
+    <div class="bottom" id="bottomPanel">
+      <div class="titlebar">
+        <div style="font-weight:800">Assets & People</div>
+        <div class="small">Click an asset to load chart • click a person to surface into Mission</div>
+      </div>
+
+      <div class="row" style="margin-top:10px">
+        <div class="col" style="flex:0 0 48%">
+          <div style="font-weight:700;margin-bottom:8px">Top 100 Crypto (first 50 visible)</div>
+          <div class="panelList" id="assetsList"></div>
+        </div>
+
+        <div class="col" style="flex:0 0 52%;padding-left:8px">
+          <div style="font-weight:700;margin-bottom:8px">People (40) — always visible</div>
+          <div class="panelList" id="peopleList"></div>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- RIGHT: asset detail, news, 200 people -->
-  <div id="right">
-    <div id="assetDetail" style="display:none">
-      <div style="display:flex;gap:12px;align-items:center">
-        <div style="width:96px;height:96px;border-radius:12px;overflow:hidden;background:#eef8ff"><img id="assetLogo" src="" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>
-        <div><div id="assetName" style="font-weight:800;font-size:18px">—</div><div id="assetMeta" class="small">—</div></div>
-      </div>
-      <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-        <div class="pill" id="detailPrice">Price: —</div>
-        <div class="pill" id="detailMcap">Mcap: —</div>
-        <div class="pill" id="detail24h">24h: —</div>
-      </div>
-      <div style="margin-top:12px"><strong>Latest News (24h — up to 3)</strong></div>
-      <div id="newsList" style="margin-top:8px;max-height:220px;overflow:auto"></div>
-    </div>
-
-    <div style="margin-top:12px;margin-bottom:8px"><strong>People (200) — always visible</strong></div>
-    <div id="peopleScroll" style="max-height:78vh; overflow:auto"></div>
-  </div>
-
-  <div id="toast"></div>
+  <div id="toast" style="position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:var(--ink);color:#fff;padding:10px 14px;border-radius:10px;display:none;z-index:9999"></div>
 
 <script>
-/* =========================================================================
-   Big single-file implementation
-   - Use TradingView Lightweight Charts for main chart rendering
-   - Use technicalindicators for calculations
-   - Many defensive fetch/pacing strategies
-   - Progressive loading of 200 people and their news
-   - Archive, rules, mission generation (client-only)
-   ========================================================================= */
+/* ============================================================
+   Five-Vision Vertical Dashboard
+   - Client-side only (browser performs live fetches)
+   - Vertical layout: news top → chart middle → assets/people bottom
+   - 40 influencers, 3 headlines each, thumbnail attempts with proxies
+   - Chart via Lightweight Charts; EMA9/21/50 + Bollinger overlays; RSI/MACD mini-charts
+   - Political inference heuristic with audit trail
+   - Progressive loading & batching for speed
+   ============================================================ */
 
-/* ---------- Configuration & State ---------- */
 const COINGECKO = 'https://api.coingecko.com/api/v3';
-const PROXY = 'https://api.allorigins.win/raw?url='; // primary public proxy fallback
-const ALT_PROXY = 'https://api.codetabs.com/v1/proxy?quest='; // alt fallback
+const PROXY = 'https://api.allorigins.win/raw?url=';
+const ALT_PROXY = 'https://api.codetabs.com/v1/proxy?quest=';
 const MAX_COINS = 100;
-const PEOPLE_COUNT = 200;
-const SOLANA_WALLET = document.getElementById('solAddr').textContent.trim();
-const POLITE_MS = 140; // pacing between external requests
+const PEOPLE_COUNT = 40;
+const POLITE_MS = 130;
 
-// internal state
 let coins = [], coinMap = {};
+let people = []; // 40 people
 let selected = null;
-let tvChart = null;           // Lightweight chart instance
-let candleSeries = null;      // candlestick series
-let emaSeries = null;
-let ema21Series = null;
-let ema50Series = null;
-let bbUpperSeries = null;
-let bbLowerSeries = null;
-let people = [];              // array of 200 people
-let archive = [];             // local archive entries
-let rules = [];               // local IF-THEN rules (simulated)
+let tvChart = null, candleSeries = null;
+let ema9Series = null, ema21Series = null, ema50Series = null, bbUpper=null, bbLower=null;
 
-/* ---------- small helpers ---------- */
-const $ = id => document.getElementById(id);
-function logDebug(...args){ console.log('[FV]', ...args); }
-function toast(msg, t=4500){ const el=$('toast'); el.textContent=msg; el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none', t); console.log('[to]', msg); }
-function cacheSet(key, val, ttl=60_000){ localStorage.setItem('fv_'+key, JSON.stringify({v:val, exp:Date.now()+ttl})); }
-function cacheGet(key){ try{ const s=localStorage.getItem('fv_'+key); if(!s) return null; const o=JSON.parse(s); if(Date.now()>o.exp){ localStorage.removeItem('fv_'+key); return null; } return o.v; }catch(e){return null;} }
+function $(id){return document.getElementById(id);}
+function toast(msg, t=4000){ const el=$('toast'); el.innerText=msg; el.style.display='block'; clearTimeout(el._t); el._t=setTimeout(()=>el.style.display='none', t); console.log('[toast]', msg); }
 function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
-function safeJSONFetch(url){ return fetchWithFallback(url, true); }
-function safeTextFetch(url){ return fetchWithFallback(url, false); }
+function cacheSet(k,v,ttl=60000){ localStorage.setItem('fv_'+k, JSON.stringify({v:v,exp:Date.now()+ttl})); }
+function cacheGet(k){ try{ const s=localStorage.getItem('fv_'+k); if(!s) return null; const o=JSON.parse(s); if(Date.now()>o.exp){ localStorage.removeItem('fv_'+k); return null; } return o.v;}catch(e){return null;} }
 
-/* Robust fetch with fallback proxies
-   tries direct -> PROXY -> ALT_PROXY
-*/
+/* robust fetch with proxies fallback (json/text) */
 async function fetchWithFallback(url, expectJson=true){
-  // try direct
-  try{
+  // direct
+  try {
     const res = await fetch(url);
-    if (res.ok){
-      return expectJson ? await res.json() : await res.text();
-    } else {
-      logDebug('Direct fetch non-ok', url, res.status);
-    }
-  }catch(e){ logDebug('Direct fetch error', e.message || e); }
-
-  // try primary proxy
-  try{
-    const purl = PROXY + encodeURIComponent(url);
-    const res = await fetch(purl);
     if (res.ok) return expectJson ? await res.json() : await res.text();
-  }catch(e){ logDebug('Proxy1 fail', e.message || e); }
-
-  // try alt proxy
-  try{
-    const aurl = ALT_PROXY + encodeURIComponent(url);
-    const res = await fetch(aurl);
-    if (res.ok) return expectJson ? await res.json() : await res.text();
-  }catch(e){ logDebug('Proxy2 fail', e.message || e); }
-
+  } catch(e){ console.log('direct fetch fail', e.message||e); }
+  // primary proxy (allorigins)
+  try {
+    const p = await fetch(PROXY + encodeURIComponent(url));
+    if (p.ok) return expectJson ? await p.json() : await p.text();
+  } catch(e){ console.log('proxy1 fail', e.message||e); }
+  // alt proxy
+  try {
+    const a = await fetch(ALT_PROXY + encodeURIComponent(url));
+    if (a.ok) return expectJson ? await a.json() : await a.text();
+  } catch(e){ console.log('proxy2 fail', e.message||e); }
   throw new Error('All fetch attempts failed: ' + url);
 }
 
-/* ---------- Load Top 100 Coins (CoinGecko) ---------- */
+/* ------------------ Top coins ------------------ */
 async function loadTopCoins(){
-  $('marketStatus').textContent = 'Loading top ' + MAX_COINS + '...';
-  const cached = cacheGet('top100_v5');
-  if (cached){ coins = cached; buildAssetList(); setTimeout(()=> fetchTopCoins(true), 800); return; }
+  $('assetsList').innerHTML = '<div class="small">Loading top coins…</div>';
+  const cached = cacheGet('top100_v6');
+  if (cached){ coins = cached; buildAssets(); setTimeout(()=> fetchTopCoins(true), 1000); return; }
   await fetchTopCoins(false);
 }
-
 async function fetchTopCoins(silent=false){
-  try{
-    let page = 1, per = 250, collected = [];
+  try {
+    let collected = [];
+    let page=1, per=250;
     while (collected.length < MAX_COINS){
       const url = `${COINGECKO}/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=${per}&page=${page}&price_change_percentage=24h,1h`;
-      const res = await safeJSONFetch(url);
-      if (!Array.isArray(res) || res.length === 0) break;
+      const res = await fetchWithFallback(url,true);
+      if (!Array.isArray(res) || res.length==0) break;
       collected = collected.concat(res);
-      page++;
-      await sleep(POLITE_MS);
+      page++; await sleep(POLITE_MS);
     }
-    coins = collected.slice(0, MAX_COINS).map(c => ({
-      id: c.id,
-      symbol: (c.symbol||'').toLowerCase(),
-      name: c.name,
-      image: c.image,
-      price: c.current_price,
-      mcap: c.market_cap,
-      change24: c.price_change_percentage_24h,
-      change1h: c.price_change_percentage_1h_in_currency
-    }));
-    coinMap = {}; coins.forEach(c => coinMap[c.symbol] = c);
-    cacheSet('top100_v5', coins, 90_000);
-    buildAssetList();
-    if (!silent) toast('Top 100 loaded');
-  }catch(e){
-    console.error('fetchTopCoins error', e);
-    $('marketStatus').textContent = 'Failed to load coins';
-    toast('Top coin load failed: ' + (e.message||e));
-  }
+    coins = collected.slice(0,MAX_COINS).map(c=>({ id:c.id, symbol:(c.symbol||'').toLowerCase(), name:c.name, image:c.image, price:c.current_price, mcap:c.market_cap, change24:c.price_change_percentage_24h }));
+    coinMap = {}; coins.forEach(c=> coinMap[c.symbol] = c);
+    cacheSet('top100_v6', coins, 120000);
+    buildAssets();
+    if(!silent) toast('Top coins loaded');
+  } catch(e){ console.error(e); $('assetsList').innerHTML = '<div class="small">Failed loading coins</div>'; toast('Top coins failed'); }
 }
-
-function buildAssetList(){
+function buildAssets(){
   const node = $('assetsList'); node.innerHTML = '';
-  coins.forEach((c, i) => {
+  coins.forEach((c,i)=>{
     const row = document.createElement('div'); row.className='asset-row';
-    row.innerHTML = `
-      <div class="asset-left">
-        <div class="asset-logo"><img src="${c.image||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>
-        <div class="asset-meta"><div class="asset-name">${c.symbol.toUpperCase()} • ${c.name}</div><div class="asset-sub">${formatMcap(c.mcap)} • 24h: ${c.change24?c.change24.toFixed(2)+'%':'-'}</div></div>
-      </div>
-      <div class="badge">#${i+1}</div>
-    `;
-    row.addEventListener('click', ()=> onAssetClicked(c.symbol));
+    row.innerHTML = `<div style="display:flex;align-items:center;gap:10px">
+      <div class="asset-logo"><img src="${c.image||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>
+      <div style="min-width:0"><div style="font-weight:700">${c.symbol.toUpperCase()} • ${c.name}</div><div class="small">${formatMcap(c.mcap)} • 24h: ${c.change24?c.change24.toFixed(2)+'%':'-'}</div></div>
+    </div><div class="small">#${i+1}</div>`;
+    row.addEventListener('click', ()=> selectAsset(c.symbol));
     node.appendChild(row);
   });
-  $('marketStatus').textContent = `Top ${coins.length} loaded • click an asset`;
 }
 
-/* ---------- Assets: on click -> load chart & news ---------- */
-async function onAssetClicked(symbol){
+/* ------------------ Asset select -> chart & news ------------------ */
+async function selectAsset(symbol){
   const s = symbol.toLowerCase();
   const coin = coinMap[s];
-  if (!coin){ toast('Asset not found'); return; }
+  if (!coin) return toast('Coin not found');
   selected = coin;
-  $('assetDetail').style.display = 'block';
-  $('assetName').textContent = `${coin.name} (${coin.symbol.toUpperCase()})`;
-  $('assetLogo').src = coin.image || '';
-  $('detailPrice').textContent = 'Price: ' + formatPrice(coin.price);
-  $('detailMcap').textContent = 'Mcap: ' + formatMcap(coin.mcap);
-  $('detail24h').textContent = '24h: ' + (coin.change24? coin.change24.toFixed(2)+'%':'-');
+  $('chartTitle').innerText = `${coin.symbol.toUpperCase()} • ${coin.name}`;
+  // create chart placeholder quickly then load candles
+  createOrResetChart();
+  // immediate placeholder candle to avoid blank
+  candleSeries.setData([{ time:Math.floor(Date.now()/1000)-86400, open:coin.price, high:coin.price, low:coin.price, close:coin.price }]);
+  try {
+    await loadCandlesAndIndicators(coin.id, parseInt($('tfSelect').value||30));
+  } catch(e){ console.warn('chart load error', e); toast('Chart load partial'); }
+  // enable mission button
   $('btnRunMission').disabled = false;
-  // load candles
-  await loadAndRenderChart(coin.id, parseInt($('tfSelector').value || 30));
-  // load news
-  await loadNewsForAsset(coin);
 }
 
-/* ---------- Chart: TradingView Lightweight Charts setup ---------- */
+/* ------------------ Chart create/destroy ------------------ */
 function createOrResetChart(){
-  // destroy previous chart if exists
-  try{
-    if (tvChart){ tvChart.remove(); tvChart = null; candleSeries = null; emaSeries=null; ema21Series=null; ema50Series=null; bbUpperSeries=null; bbLowerSeries=null; }
-  }catch(e){ console.warn('chart destroy error', e); }
-  // create container element
-  const container = document.getElementById('tvChart');
-  container.innerHTML = ''; // clear
-  // create chart
+  // remove existing chart
+  try {
+    if (tvChart){ tvChart.remove(); tvChart = null; candleSeries = null; ema9Series=null; ema21Series=null; ema50Series=null; bbUpper=null; bbLower=null; }
+  } catch(e){ console.warn('chart destroy fail', e); }
+  // create new chart
+  const container = $('tvChart');
+  container.innerHTML = '';
+  const width = container.clientWidth || Math.max(800, window.innerWidth*0.5);
+  const height = Math.max(320, container.clientHeight || Math.round(window.innerHeight*0.45));
   tvChart = LightweightCharts.createChart(container, {
-    width: container.clientWidth || 800,
-    height: container.clientHeight || 520,
-    layout: { backgroundColor: 'transparent', textColor: '#071127' },
-    rightPriceScale: { borderColor: 'rgba(0,0,0,0.06)' },
-    timeScale: { borderColor: 'rgba(0,0,0,0.06)', timeVisible: true, secondsVisible: false }
+    width, height,
+    layout:{ backgroundColor:'transparent', textColor: getComputedStyle(document.documentElement).getPropertyValue('--ink') || '#071127' },
+    rightPriceScale:{ borderColor:'rgba(0,0,0,0.06)' },
+    timeScale:{ borderColor:'rgba(0,0,0,0.06)', timeVisible:true }
   });
-  window.addEventListener('resize', () => { try{ tvChart.applyOptions({ width: container.clientWidth, height: container.clientHeight }); }catch(e){} });
-  // add series
-  candleSeries = tvChart.addCandlestickSeries({ upColor: '#16a34a', downColor:'#ef4444', borderVisible:false, wickVisible:true });
-  // overlay lines
-  emaSeries = tvChart.addLineSeries({ color:'#0ea5e9', lineWidth:1.6 });
+  window.addEventListener('resize', ()=> { try{ tvChart.applyOptions({ width: container.clientWidth, height: Math.max(320, container.clientHeight) }); }catch(e){} });
+  candleSeries = tvChart.addCandlestickSeries({ upColor:'#16a34a', downColor:'#ef4444', borderVisible:false, wickVisible:true });
+  ema9Series = tvChart.addLineSeries({ color:'#0ea5e9', lineWidth:1.6 });
   ema21Series = tvChart.addLineSeries({ color:'#7c3aed', lineWidth:1.2 });
   ema50Series = tvChart.addLineSeries({ color:'#f59e0b', lineWidth:1.2 });
-  bbUpperSeries = tvChart.addLineSeries({ color:'#94a3b8', lineWidth:1, lineStyle: LightweightCharts.LineStyle.Dashed });
-  bbLowerSeries = tvChart.addLineSeries({ color:'#94a3b8', lineWidth:1, lineStyle: LightweightCharts.LineStyle.Dashed });
+  bbUpper = tvChart.addLineSeries({ color:'#94a3b8', lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed });
+  bbLower = tvChart.addLineSeries({ color:'#94a3b8', lineWidth:1, lineStyle:LightweightCharts.LineStyle.Dashed });
 }
 
-/* ---------- Load OHLC and render to chart ---------- */
-async function loadAndRenderChart(coinId, days){
-  try{
-    // create chart fresh (destroys previous)
-    createOrResetChart();
-
-    // try ohlc first
+/* ------------------ Load candles & compute indicators ------------------ */
+async function loadCandlesAndIndicators(coinId, days=30){
+  try {
+    // try OHLC then fallback to market_chart
     let ohlc = null;
-    const allowedDays = [1,7,14,30,90,180,365,'max'];
-    const dval = allowedDays.includes(days) ? days : (days<=7?7:30);
-    const ohlcUrl = `${COINGECKO}/coins/${encodeURIComponent(coinId)}/ohlc?vs_currency=usd&days=${dval}`;
-    try{ ohlc = await safeJSONFetch(ohlcUrl); } catch(e){ logDebug('ohlc fetch failed', e.message || e); }
+    const ohlcUrl = `${COINGECKO}/coins/${encodeURIComponent(coinId)}/ohlc?vs_currency=usd&days=${days}`;
+    try { ohlc = await fetchWithFallback(ohlcUrl, true); } catch(e){ console.log('ohlc fail', e.message||e); }
+    let series = [];
     if (Array.isArray(ohlc) && ohlc.length){
-      const series = ohlc.map(i => ({ time: Math.floor(i[0]/1000), open: i[1], high: i[2], low: i[3], close: i[4]}));
-      candleSeries.setData(series);
-      // compute indicators (closes)
-      const closes = series.map(s => s.close);
-      const times = series.map(s => s.time*1000);
-      computeIndicatorsAndRender(closes, times, series);
+      series = ohlc.map(i=> ({ time: Math.floor(i[0]/1000), open:i[1], high:i[2], low:i[3], close:i[4] }) );
+    } else {
+      const mcUrl = `${COINGECKO}/coins/${encodeURIComponent(coinId)}/market_chart?vs_currency=usd&days=${days}&interval=hourly`;
+      const mc = await fetchWithFallback(mcUrl, true);
+      if (mc && Array.isArray(mc.prices) && mc.prices.length){
+        const bars = buildOHLCFromPrices(mc.prices, 1);
+        series = bars.map(b=> ({ time: Math.floor(b.x.getTime()/1000), open:b.o, high:b.h, low:b.l, close:b.c }) );
+      }
+    }
+
+    if (series.length === 0){
+      // fallback: single candle from current price
+      candleSeries.setData([{ time: Math.floor(Date.now()/1000), open:selected.price, high:selected.price, low:selected.price, close:selected.price }]);
       return;
     }
-    // fallback to market_chart
-    const mcUrl = `${COINGECKO}/coins/${encodeURIComponent(coinId)}/market_chart?vs_currency=usd&days=${days}&interval=hourly`;
-    const mc = await safeJSONFetch(mcUrl);
-    if (mc && Array.isArray(mc.prices) && mc.prices.length){
-      // build OHLC grouped hourly
-      const ohlcBuilt = buildOHLCFromPrices(mc.prices, 1);
-      // convert to lightweight format
-      const series = ohlcBuilt.map(bar => ({ time: Math.floor(bar.x.getTime()/1000), open: bar.o, high: bar.h, low: bar.l, close: bar.c }));
-      candleSeries.setData(series);
-      const closes = series.map(s => s.close);
-      const times = series.map(s => s.time*1000);
-      computeIndicatorsAndRender(closes, times, series);
-      return;
+
+    candleSeries.setData(series);
+
+    // compute indicators (closes)
+    const closes = series.map(s=>s.close);
+    // EMAs
+    const ema9 = technicalindicators.EMA.calculate({ period:9, values:closes });
+    const ema21 = technicalindicators.EMA.calculate({ period:21, values:closes });
+    const ema50 = technicalindicators.EMA.calculate({ period:50, values:closes });
+    // Bollinger
+    const bb = technicalindicators.BollingerBands.calculate({ period:20, stdDev:2, values:closes });
+    // RSI
+    const rsi = technicalindicators.RSI.calculate({ period:14, values:closes });
+    // MACD
+    const macd = technicalindicators.MACD.calculate({ values:closes, fastPeriod:12, slowPeriod:26, signalPeriod:9 });
+
+    // map arrays to chart times: mapToSeries helper aligns to right
+    const mapped = (arr) => {
+      const out = []; const offset = series.length - arr.length;
+      for (let i=0;i<series.length;i++){
+        const t = series[i].time;
+        const v = (i-offset>=0) ? arr[i-offset] : null;
+        if (v !== null && v !== undefined) out.push({ time: t, value: v });
+      }
+      return out;
+    };
+
+    ema9Series.setData(mapped(ema9));
+    ema21Series.setData(mapped(ema21));
+    ema50Series.setData(mapped(ema50));
+    if (bb && bb.length){
+      bbUpper.setData(mapped(bb.map(x=>x.upper)));
+      bbLower.setData(mapped(bb.map(x=>x.lower)));
     }
-    // ultimate fallback: single candle from current price
-    const now = Math.floor(Date.now()/1000);
-    const single = [{ time: now, open: selected.price, high: selected.price, low: selected.price, close: selected.price }];
-    candleSeries.setData(single);
-    computeIndicatorsAndRender([selected.price], [now*1000], single);
-  }catch(e){
-    console.error('loadAndRenderChart error', e);
-    toast('Chart load failed: ' + (e.message||e));
-  }
+
+    // render RSI & MACD mini-charts
+    renderMiniLine('rsiMini', rsi, { min:0, max:100, color:'#7c3aed' });
+    renderMacdMini('macdMini', macd);
+
+    // compute callouts
+    computeCallouts(ema9, ema21, rsi, macd);
+
+  } catch(e){ console.error('loadCandlesAndIndicators error', e); throw e; }
 }
 
-/* ---------- Helpers: build OHLC from tick prices ---------- */
-function buildOHLCFromPrices(pricesArray, hoursPerBar=1){
-  // pricesArray: [[ts_ms, price], ...]
-  if (!pricesArray || !pricesArray.length) return [];
+function buildOHLCFromPrices(pricesArr, hoursPerBar=1){
+  if (!pricesArr || !pricesArr.length) return [];
   const msPerBar = hoursPerBar * 3600 * 1000;
   const bars = [];
   let cur = null;
-  for (let i=0;i<pricesArray.length;i++){
-    const ts = pricesArray[i][0];
-    const p = pricesArray[i][1];
+  for (let i=0;i<pricesArr.length;i++){
+    const ts = pricesArr[i][0], p = pricesArr[i][1];
     if (!cur){
       const start = Math.floor(ts / msPerBar) * msPerBar;
-      cur = { ts: start, o:p, h:p, l:p, c:p };
+      cur = { ts:start, o:p, h:p, l:p, c:p };
     } else {
       if (ts - cur.ts < msPerBar){
-        cur.h = Math.max(cur.h, p); cur.l = Math.min(cur.l, p); cur.c = p;
+        cur.h = Math.max(cur.h, p); cur.l = Math.min(cur.l,p); cur.c = p;
       } else {
         bars.push({ x: new Date(cur.ts), o:cur.o, h:cur.h, l:cur.l, c:cur.c });
         const start = Math.floor(ts / msPerBar) * msPerBar;
@@ -451,435 +376,221 @@ function buildOHLCFromPrices(pricesArray, hoursPerBar=1){
   return bars;
 }
 
-/* ---------- Compute indicators and render overlays + subpanels ---------- */
-async function computeIndicatorsAndRender(closes, timestampsMs, seriesCandles){
-  try{
-    // calculate EMAs
-    const ema9 = technicalindicators.EMA.calculate({ period:9, values:closes });
-    const ema21 = technicalindicators.EMA.calculate({ period:21, values:closes });
-    const ema50 = technicalindicators.EMA.calculate({ period:50, values:closes });
-    // Bollinger Bands (20,2)
-    const bb = technicalindicators.BollingerBands.calculate({ period:20, stdDev:2, values:closes });
-    // ATR (14) using highs/lows if available; approximate if not
-    let highs = [], lows = [];
-    if (seriesCandles && seriesCandles.length){
-      highs = seriesCandles.map(d => d.high);
-      lows = seriesCandles.map(d => d.low);
-    }
-    let atr = [];
-    if (highs.length === closes.length){
-      atr = technicalindicators.ATR.calculate({ period:14, high:highs, low:lows, close:closes });
-    } else {
-      // fallback simple ATR approx
-      const trs = []; for (let i=1;i<closes.length;i++) trs.push(Math.abs(closes[i]-closes[i-1])); atr = technicalindicators.SMA.calculate({ period:14, values:trs });
-    }
-    // RSI & MACD
-    const rsi = technicalindicators.RSI.calculate({ period:14, values:closes });
-    const macd = technicalindicators.MACD.calculate({ values:closes, fastPeriod:12, slowPeriod:26, signalPeriod:9, SimpleMAOscillator:false, SimpleMASignal:false });
-
-    // attach EMA lines to chart (align to right)
-    const len = seriesCandles.length;
-    const mapToSeries = (arr) => {
-      const out = [];
-      const offset = len - arr.length;
-      for (let i=0;i<len;i++){
-        const time = seriesCandles[i].time;
-        out.push({ time: time, value: (i-offset>=0 ? arr[i-offset] : null) });
-      }
-      return out;
-    };
-
-    const ema9mapped = ema9.length ? mapToSeries(ema9) : [];
-    const ema21mapped = ema21.length ? mapToSeries(ema21) : [];
-    const ema50mapped = ema50.length ? mapToSeries(ema50) : [];
-    const bbumapped = bb.length ? mapToSeries(bb.map(x=>x.upper)) : [];
-    const bblmapped = bb.length ? mapToSeries(bb.map(x=>x.lower)) : [];
-
-    // set overlay series data (filter nulls out)
-    emaSeries.setData(ema9mapped.filter(p=>p.value!==null));
-    ema21Series.setData(ema21mapped.filter(p=>p.value!==null));
-    ema50Series.setData(ema50mapped.filter(p=>p.value!==null));
-    bbUpperSeries.setData(bbumapped.filter(p=>p.value!==null));
-    bbLowerSeries.setData(bblmapped.filter(p=>p.value!==null));
-
-    // render RSI in its box using a small Lightweight Chart
-    renderMiniLineChart('rsiChartContainer', rsi, { min:0, max:100, lineColor:'#7c3aed', title:'RSI(14)' });
-    // render MACD histogram + lines
-    renderMacdMini('macdChartContainer', macd);
-
-    // compute DITIMPA callouts & archive them
-    computeAndShowCallouts(ema9, ema21, rsi, macd, atr);
-  }catch(e){
-    console.error('computeIndicatorsAndRender error', e);
-  }
-}
-
-/* ---------- render mini line chart (Lightweight) ---------- */
-function renderMiniLineChart(containerId, values, opts={}){
-  const container = document.getElementById(containerId);
+/* mini chart rendering using LightweightCharts for small data */
+function renderMiniLine(containerId, values, opts={}){
+  const container = $(containerId);
   container.innerHTML = '';
-  const canvas = document.createElement('div');
-  canvas.style.width='100%'; canvas.style.height='100%';
-  container.appendChild(canvas);
-  const chart = LightweightCharts.createChart(canvas, {
-    layout:{ backgroundColor:'transparent', textColor:'#071127' },
-    rightPriceScale:{ visible:false }, timeScale:{ visible:false }, grid:{ vertLines:{ visible:false }, horzLines:{ visible:false } }
-  });
-  const s = chart.addLineSeries({ color: opts.lineColor || '#0ea5e9', lineWidth: 1.4 });
-  const data = values.map((v,i)=> ({ time: i, value: v }) ).filter(x=>x.value!==null && x.value!==undefined);
-  s.setData(data);
+  const wrapper = document.createElement('div'); wrapper.style.width='100%'; wrapper.style.height='100%';
+  container.appendChild(wrapper);
+  const chart = LightweightCharts.createChart(wrapper, { width: wrapper.clientWidth, height: wrapper.clientHeight, layout:{backgroundColor:'transparent',textColor:'#071127'}, timeScale:{visible:false}, rightPriceScale:{visible:false} });
+  const series = chart.addLineSeries({ color:opts.color || '#0ea5e9', lineWidth:1.4 });
+  const data = values.map((v,i)=> ({ time:i, value:v }) ).filter(x=>x.value!==null && x.value!==undefined);
+  series.setData(data);
 }
 
-/* ---------- render MACD mini chart ---------- */
 function renderMacdMini(containerId, macd){
-  const container = document.getElementById(containerId);
-  container.innerHTML = '';
-  const canvas = document.createElement('div');
-  canvas.style.width='100%'; canvas.style.height='100%';
-  container.appendChild(canvas);
-  const chart = LightweightCharts.createChart(canvas, {
-    layout:{ backgroundColor:'transparent', textColor:'#071127' },
-    rightPriceScale:{ visible:false }, timeScale:{ visible:false }, grid:{ vertLines:{ visible:false }, horzLines:{ visible:false } }
-  });
-  // histogram as bar series requires providing positive & negative colors: use two series
-  const histData = macd.map((m,i)=> ({ time:i, value: m ? m.histogram : 0 }) );
-  const macdSeries = chart.addHistogramSeries({ color:'#16a34a', base:0, priceFormat:{ type:'volume' } });
-  macdSeries.setData(histData);
+  const container = $(containerId); container.innerHTML = '';
+  const wrapper = document.createElement('div'); wrapper.style.width='100%'; wrapper.style.height='100%';
+  container.appendChild(wrapper);
+  const chart = LightweightCharts.createChart(wrapper, { width: wrapper.clientWidth, height: wrapper.clientHeight, layout:{backgroundColor:'transparent',textColor:'#071127'}, timeScale:{visible:false}, rightPriceScale:{visible:false} });
+  // histogram
+  const hist = chart.addHistogramSeries({ color:'#16a34a', priceFormat:{type:'volume'} });
+  const dataHist = macd.map((m,i)=> ({ time:i, value: m ? m.histogram : 0 }) );
+  hist.setData(dataHist);
   const sig = chart.addLineSeries({ color:'#0ea5e9', lineWidth:1 });
   const macdLine = chart.addLineSeries({ color:'#7c3aed', lineWidth:1 });
-  const sigData = macd.map((m,i)=> ({ time:i, value: m ? m.signal : null })).filter(x=>x.value!==null);
-  const macdData = macd.map((m,i)=> ({ time:i, value: m ? m.MACD : null })).filter(x=>x.value!==null);
-  sig.setData(sigData); macdLine.setData(macdData);
+  sig.setData(macd.map((m,i)=> ({ time:i, value: m ? m.signal : null }) ).filter(x=>x.value!==null));
+  macdLine.setData(macd.map((m,i)=> ({ time:i, value: m ? m.MACD : null }) ).filter(x=>x.value!==null));
 }
 
-/* ---------- compute DITIMPA callouts ---------- */
-function computeAndShowCallouts(ema9, ema21, rsi, macd, atr){
-  const container = $('calloutContainer'); container.innerHTML = '';
+/* compute callouts and archive */
+function computeCallouts(ema9, ema21, rsi, macd){
+  const container = $('chartSubtitle'); // reuse subtitle area to show summary
   const calls = [];
-
-  // EMA cross detection (last points)
   if (ema9.length>=2 && ema21.length>=2){
-    const a = ema9[ema9.length-1], pa = ema9[ema9.length-2];
-    const b = ema21[ema21.length-1], pb = ema21[ema21.length-2] || b;
-    if (a > b && pa <= pb) calls.push('EMA9 crossed above EMA21 — bullish');
-    if (a < b && pa >= pb) calls.push('EMA9 crossed below EMA21 — bearish');
+    const a=ema9[ema9.length-1], pa=ema9[ema9.length-2], b=ema21[ema21.length-1], pb=ema21[ema21.length-2]||b;
+    if (a>b && pa<=pb) calls.push('EMA9 crossed above EMA21 — short-term bullish');
+    if (a<b && pa>=pb) calls.push('EMA9 crossed below EMA21 — short-term bearish');
   }
-
-  // RSI thresholds
   if (rsi.length){
     const last = rsi[rsi.length-1];
-    if (last > 70) calls.push('RSI > 70 — possible overbought');
-    if (last < 30) calls.push('RSI < 30 — oversold');
+    if (last>70) calls.push('RSI > 70 — overbought');
+    if (last<30) calls.push('RSI < 30 — oversold');
   }
-
-  // MACD histogram acceleration
   if (macd.length){
     const hist = macd.map(m=>m.histogram);
-    const lastH = hist[hist.length-1] || 0, prevH = hist[hist.length-2] || 0;
-    if (lastH > prevH * 1.8 && lastH > 0) calls.push('MACD histogram rising quickly — momentum building');
-    if (lastH < prevH * 1.8 && lastH < 0) calls.push('MACD histogram dropping — momentum weakening');
+    const lastH = hist[hist.length-1]||0, prevH = hist[hist.length-2]||0;
+    if (lastH>prevH*1.8 && lastH>0) calls.push('MACD histogram rising — momentum building');
+    if (lastH<prevH*1.8 && lastH<0) calls.push('MACD dropping — momentum weakening');
   }
-
-  // ATR elevated? approximate threshold
-  if (atr && atr.length){
-    const lastAtr = atr[atr.length-1] || 0;
-    if (selected && lastAtr > (selected.price * 0.03)) calls.push('ATR elevated — volatility higher than usual');
-  }
-
-  calls.slice(0,4).forEach(c => {
-    const el = document.createElement('div'); el.className='callout'; el.textContent = c; container.appendChild(el);
-    archive.unshift({ type:'callout', coin:selected?selected.symbol:'', text:c, ts:Date.now() });
-  });
-  $('archivePanel').textContent = `Archive entries: ${archive.length}`;
+  container.innerText = calls.slice(0,3).join(' • ') || 'Indicators stable';
+  // archive callouts at top of local archive
+  calls.slice(0,3).forEach(c => archiveUnshift({ type:'callout', coin:selected?selected.symbol:'', text:c, ts:Date.now() }));
+  $('btnOpenArchive').innerText = 'Archive ('+archive.length+')';
 }
 
-/* ---------- News fetching for asset: up to 3 items in last 24 hours ---------- */
-async function loadNewsForAsset(coin){
-  const container = $('newsList'); container.innerHTML = '<div class="small muted-ink">Loading news (24h)…</div>';
-  try{
-    const q = `https://news.google.com/rss/search?q=${encodeURIComponent(coin.name)}+when:1d`;
-    const xmlText = await safeTextFetch(q);
-    if (!xmlText){ container.innerHTML = '<div class="small muted-ink">No news (blocked or no results)</div>'; return; }
-    const dom = new DOMParser().parseFromString(xmlText,'text/xml');
-    const items = dom.querySelectorAll('item');
-    container.innerHTML = '';
-    let count = 0;
-    for (let i=0;i<items.length && count<3;i++){
-      const it = items[i];
-      const title = it.querySelector('title')?.textContent || '';
-      const link = it.querySelector('link')?.textContent || '';
-      const desc = it.querySelector('description')?.textContent || '';
-      // try extract image from desc
-      let img = null;
-      const m = desc && desc.match(/<img[^>]+src=["']([^"']+)["']/i);
-      if (m) img = m[1];
-      // attempt OG image extract via proxy if none
-      if (!img && link){
-        try{
-          const pageHtml = await safeTextFetch(link);
-          if (pageHtml){
-            const mo = pageHtml.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) || pageHtml.match(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i);
-            if (mo) img = mo[1];
-          }
-        }catch(e){ /* ignore */ }
-      }
+/* ------------------ NEWS & People ------------------ */
+/* 40 influencer seed (you approved earlier). We'll use these names and progressively fetch headlines. */
+const peopleSeed = [
+ "Elon Musk","Vitalik Buterin","Changpeng Zhao","Michael Saylor","Cathie Wood","Larry Fink","Warren Buffett","Jamie Dimon",
+ "Bill Gates","Jeff Bezos","Andreas Antonopoulos","Naval Ravikant","Marc Andreessen","Ben Horowitz","Ray Dalio","Peter Thiel",
+ "Mark Cuban","Chamath Palihapitiya","Sam Altman","Jensen Huang","Tim Cook","Sundar Pichai","Christine Lagarde","Jerome Powell",
+ "Janet Yellen","Xi Jinping","Narendra Modi","Vladimir Putin","Emmanuel Macron","Olaf Scholz","Mary Barra","Sheryl Sandberg",
+ "Reed Hastings","Susan Wojcicki","Michael Bloomberg","Larry Page","Sergey Brin","Steve Cohen","Daniel Loeb","Robert F. Smith",
+ "Anne Wojcicki","Jack Dorsey"
+];
 
-      const el = document.createElement('div'); el.className = 'floating-news';
-      el.innerHTML = `<img class="news-thumb" src="${img||''}" onerror="this.style.display='none'"><div><div style="font-weight:700"><a href="${link}" target="_blank" style="color:var(--ink);text-decoration:none">${title}</a></div><div class="small muted-ink" style="margin-top:6px">${link}</div></div>`;
-      container.appendChild(el);
-      count++;
-    }
-    if (count===0) container.innerHTML = '<div class="small muted-ink">No headlines in last 24 hours</div>';
-  }catch(e){
-    console.error('loadNewsForAsset error', e);
-    container.innerHTML = '<div class="small muted-ink">Error loading news</div>';
-  }
+function initPeople(){
+  people = peopleSeed.slice(0, PEOPLE_COUNT).map((n,i)=>({ id:'p'+(i+1), name:n, conn:guessConnection(n), img:null, news:[], political:{D:0,R:0,U:100, evidence:[]}}));
+  renderPeople();
+  // progressive enrichment
+  setTimeout(()=> enrichPeople(0), 700);
 }
-
-/* ---------- People (200) — build the list and progressively enrich ---------- */
-function buildPeopleAlwaysVisible(){
-  // curated seed of notable names (crypto, finance, policy, media). We'll auto-expand to 200.
-  const seed = [
-    "Elon Musk","Vitalik Buterin","Changpeng Zhao","Michael Saylor","Cathie Wood","Larry Fink","Warren Buffett","Jamie Dimon","Bill Gates","Jeff Bezos",
-    "Andreas Antonopoulos","Naval Ravikant","Marc Andreessen","Ben Horowitz","Ray Dalio","Peter Thiel","Mark Cuban","Chamath Palihapitiya","Sam Altman","Jensen Huang",
-    "Tim Cook","Sundar Pichai","Christine Lagarde","Jerome Powell","Janet Yellen","Xi Jinping","Narendra Modi","Vladimir Putin","Emmanuel Macron","Olaf Scholz",
-    "Mary Barra","Sheryl Sandberg","Reed Hastings","Susan Wojcicki","Michael Bloomberg","Larry Page","Sergey Brin","Cathie Wood","Steve Cohen","Daniel Loeb"
-  ];
-  const arr = seed.slice();
-  while (arr.length < PEOPLE_COUNT) arr.push('Influencer ' + (arr.length+1));
-  people = arr.map((n,i) => ({ id:'p'+(i+1), name:n, conn:guessConnection(n), img:null, news:[] }));
-  renderPeopleAll();
-  // progressive enrichment: wiki thumbnail & 3 headlines when possible
-  setTimeout(()=> enrichPeopleProgressively(0), 900);
-}
-
 function guessConnection(name){
-  const map = {
-    "Elon Musk":"Tesla / SpaceX / X",
-    "Vitalik Buterin":"Ethereum",
-    "Changpeng Zhao":"Binance",
-    "Michael Saylor":"MicroStrategy",
-    "Cathie Wood":"ARK Invest",
-    "Larry Fink":"BlackRock",
-    "Warren Buffett":"Berkshire Hathaway",
-    "Jamie Dimon":"JPMorgan",
-    "Bill Gates":"Microsoft",
-    "Jeff Bezos":"Amazon / Blue Origin",
-    "Naval Ravikant":"Angel investor",
-    "Marc Andreessen":"a16z",
-    "Ray Dalio":"Bridgewater",
-    "Peter Thiel":"Founders Fund"
-  };
+  const map = {"Elon Musk":"Tesla / SpaceX / X","Vitalik Buterin":"Ethereum","Changpeng Zhao":"Binance","Michael Saylor":"MicroStrategy","Cathie Wood":"ARK Invest","Larry Fink":"BlackRock","Warren Buffett":"Berkshire Hathaway","Jamie Dimon":"JPMorgan"};
   return map[name] ? `Closest connection: ${map[name]}` : 'Closest connection: —';
 }
-
-function renderPeopleAll(){
-  const node = $('peopleScroll'); node.innerHTML = '';
-  people.forEach(p => {
-    const el = document.createElement('div'); el.className = 'person-card';
+function renderPeople(){
+  const node = $('peopleList'); node.innerHTML = '';
+  people.forEach(p=>{
+    const el = document.createElement('div'); el.className='person-card';
     el.innerHTML = `<div class="person-thumb"><img src="${p.img||''}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>
-      <div style="flex:1">
-        <div style="font-weight:800">${p.name}</div>
-        <div class="small muted-ink" id="conn-${p.id}" style="margin-top:6px">${p.conn}</div>
-        <div class="small muted-ink" id="news-${p.id}" style="margin-top:6px">Loading headlines...</div>
-      </div>`;
-    el.addEventListener('click', ()=> surfacePersonToAI(p.id));
+      <div style="flex:1"><div style="font-weight:700">${p.name}</div><div class="small" id="pconn-${p.id}" style="margin-top:6px">${p.conn}</div><div class="small" id="pnews-${p.id}" style="margin-top:6px">Loading headlines...</div><div class="small" id="ppol-${p.id}" style="margin-top:6px;color:#374151"></div></div>`;
+    el.addEventListener('click', ()=> surfacePerson(p.id));
     node.appendChild(el);
   });
-  $('peoplePreview').textContent = 'People loaded — headlines filling progressively';
+  $('newsTopStatus').innerText = 'People list rendered — headlines fetching in background';
 }
 
-async function enrichPeopleProgressively(start){
-  const batch = 12;
-  for (let i=start;i<Math.min(people.length, start+batch); i++){
+/* Enrich people progressively in small batches for speed and low concurrency */
+async function enrichPeople(start){
+  const batch = 6;
+  for (let i=start; i<Math.min(people.length, start+batch); i++){
     const p = people[i];
-    // try wiki thumbnail
-    try{
-      const wikiUrl = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(p.name)}`;
-      const wiki = await fetchWithFallback(wikiUrl, true);
+    // attempt wiki thumbnail
+    try {
+      const wiki = await fetchWithFallback(`https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(p.name)}`, true);
       if (wiki && wiki.thumbnail && wiki.thumbnail.source) p.img = wiki.thumbnail.source;
-    }catch(e){ /* ignore */ }
-
-    // fetch up to 3 recent headlines (1-3 days) with images
-    try{
+    } catch(e){}
+    // fetch Google News RSS for 3 days
+    try {
       const rssUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(p.name)}+when:3d`;
-      const text = await fetchWithFallback(rssUrl, false);
-      if (text){
-        const dom = new DOMParser().parseFromString(text, 'text/xml');
-        const items = dom.querySelectorAll('item');
-        p.news = [];
-        let count = 0;
-        for (let k=0;k<items.length && count<3;k++){
-          const it = items[k];
-          const title = it.querySelector('title')?.textContent || '';
-          const link = it.querySelector('link')?.textContent || '';
-          const desc = it.querySelector('description')?.textContent || '';
-          let img = null;
-          const m = desc && desc.match(/<img[^>]+src=["']([^"']+)["']/i);
-          if (m) img = m[1];
+      const xml = await fetchWithFallback(rssUrl, false);
+      if (xml){
+        const dom = new DOMParser().parseFromString(xml, 'text/xml');
+        const items = dom.querySelectorAll('item'); p.news = [];
+        for (let k=0;k<items.length && p.news.length<3; k++){
+          const it = items[k]; const title = it.querySelector('title')?.textContent || ''; const link = it.querySelector('link')?.textContent || ''; const desc = it.querySelector('description')?.textContent || '';
+          let img = null; const m = desc && desc.match(/<img[^>]+src=["']([^"']+)["']/i); if (m) img = m[1];
           if (!img && link){
-            // try OG extraction via proxy (best-effort)
+            // try OG extraction via proxies (best-effort)
             try{
               const page = await fetchWithFallback(link, false);
-              if (page){
-                const mo = page.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) || page.match(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i);
-                if (mo) img = mo[1];
-              }
+              const mo = page && page.match(/<meta\s+property=["']og:image["']\s+content=["']([^"']+)["']/i) || page && page.match(/<meta\s+name=["']twitter:image["']\s+content=["']([^"']+)["']/i);
+              if (mo) img = mo[1];
             }catch(e){}
           }
           p.news.push({ title, link, img });
-          count++;
         }
       }
-    }catch(e){ console.warn('person news fetch fail', p.name, e); }
-    // update DOM entries
-    const newsEl = document.getElementById('news-'+p.id);
-    if (newsEl){
-      if (p.news && p.news.length){
-        newsEl.innerHTML = p.news.slice(0,3).map(n => `<div style="margin-top:6px"><a href="${n.link}" target="_blank" style="color:var(--ink);text-decoration:none">${n.title}</a></div>`).join('');
-      } else newsEl.textContent = 'No recent headlines';
-    }
-    const connEl = document.getElementById('conn-'+p.id);
-    if (connEl) connEl.textContent = p.conn;
+    } catch(e){ console.warn('person rss fail', p.name, e); }
+    // political inference heuristics from headlines
+    inferPoliticalSignals(p);
+    // update DOM quickly
+    const newsEl = $('pnews-'+p.id); if (newsEl){ newsEl.innerHTML = p.news.length ? p.news.map(n=>`<div style="margin-top:6px"><a href="${n.link}" target="_blank" style="color:var(--ink);text-decoration:none">${n.title}</a></div>`).join('') : 'No recent headlines'; }
+    const imgEl = document.querySelector(`#peopleList img[src="${p.img||''}"]`);
+    const polEl = $('ppol-'+p.id); if (polEl) polEl.innerText = politicalSummary(p);
     await sleep(POLITE_MS);
   }
-  if (start + batch < people.length) setTimeout(()=> enrichPeopleProgressively(start+batch), 600);
+  if (start + batch < people.length) setTimeout(()=> enrichPeople(start+batch), 600);
 }
 
-/* ---------- surface person to AI panel (Vision 2) ---------- */
-function surfacePersonToAI(pid){
-  const p = people.find(x=>x.id === pid);
-  if (!p) return;
-  let html = `<div style="font-weight:800">${p.name}</div><div class="small muted-ink" style="margin-top:6px">${p.conn}</div>`;
-  if (p.news && p.news.length){
-    html += '<div style="margin-top:8px"><strong>Latest</strong></div>';
-    p.news.slice(0,3).forEach(n => html += `<div class="small" style="margin-top:6px"><a href="${n.link}" target="_blank" style="color:var(--ink);text-decoration:none">${n.title}</a></div>`);
-  } else html += '<div class="small muted-ink" style="margin-top:6px">No recent headlines</div>';
-  html += `<div style="margin-top:8px"><button class="pill" onclick="createMissionFromPerson('${pid}')">Use in Mission</button></div>`;
-  $('aiPanel').innerHTML = html;
-}
-
-/* ---------- generate mission (Vision 2) combining asset + person + news ---------- */
-function createMissionFromPerson(pid){
-  const p = people.find(x=>x.id===pid);
-  if (!p) return;
-  const assetSym = selected ? selected.symbol.toUpperCase() : '[no asset selected]';
-  const steps = [
-    `1) Quick chart check: verify EMA9/21/50, RSI and MACD for ${assetSym}.`,
-    `2) Read top 2 headlines for ${p.name} and check source reliability.`,
-    `3) Run microcap / DexS liquidity quick-check on any related token.`,
-    `4) Build risk checklist: liquidity depth, holder concentration, news risk.`,
-    `5) Prepare a simulated ladder buy/watch plan (no execution).`
-  ];
-  $('aiPanel').innerHTML = `<div style="font-weight:800">Mission — context: ${p.name}</div><div class="small muted-ink" style="margin-top:8px">${steps.join('<br>')}</div>`;
-  archive.unshift({ type:'mission', person:p.name, asset:selected?selected.symbol:'', steps, ts:Date.now() });
-  $('archivePanel').textContent = `Archive entries: ${archive.length}`;
-  toast('Mission created and archived (simulated)');
-}
-
-/* ---------- Market Radar (Vision 4) ---------- */
-async function scanMarketRadar(){
-  $('radarPanel').textContent = 'Scanning market anomalies…';
-  try{
-    const ids = coins.slice(0,40).map(c=>c.id).join(',');
-    const url = `${COINGECKO}/coins/markets?vs_currency=usd&ids=${encodeURIComponent(ids)}&order=market_cap_desc&per_page=40&page=1&price_change_percentage=1h,24h`;
-    const res = await safeJSONFetch(url);
-    const flags = [];
-    res.forEach(r => {
-      const p1 = r.price_change_percentage_1h_in_currency || 0;
-      const p24 = r.price_change_percentage_24h || 0;
-      if (Math.abs(p1) > 6) flags.push(`${r.symbol.toUpperCase()} ${p1.toFixed(2)}% 1h`);
-      if (Math.abs(p24) > 12) flags.push(`${r.symbol.toUpperCase()} ${p24.toFixed(2)}% 24h`);
-    });
-    $('radarPanel').textContent = flags.length ? 'Anomalies: ' + flags.slice(0,6).join(', ') : 'No anomalies detected';
-    archive.unshift({ type:'radar', flags, ts:Date.now() });
-    if (flags.length) toast('Radar anomalies: ' + flags.slice(0,3).join(', '), 7000);
-  }catch(e){ console.error('radar error', e); $('radarPanel').textContent = 'Radar failed'; toast('Radar error'); }
-}
-
-/* ---------- Archive display (Vision 3) ---------- */
-function openArchivePanel(){
-  let html = `<div style="font-weight:800">Shadow Archive (latest)</div><div class="small muted-ink" style="margin-top:8px">Entries: ${archive.length}</div><div style="max-height:420px;overflow:auto;margin-top:8px">`;
-  for (let i=0;i<Math.min(500, archive.length); i++){
-    const a = archive[i];
-    const summary = a.text || (a.flags ? a.flags.join(', ') : (a.steps ? a.steps.join('; ') : ''));
-    html += `<div class="small" style="margin-top:6px">${new Date(a.ts).toLocaleString()} — ${a.type} — ${summary}</div>`;
+/* political inference: simple counts of party-related keywords & evidence aggregation */
+function inferPoliticalSignals(p){
+  const textPool = p.news.map(n=> (n.title||'') + ' ' + (n.link||'')).join(' ').toLowerCase();
+  const evidence = [];
+  let dem=0, rep=0;
+  const demKeywords = ['democrat','democratic','biden','left','progressive','liberal','donated to democratic','endorsed biden','supports democratic'];
+  const repKeywords = ['republican','gop','trump','conservative','right-wing','donated to republican','endorsed trump','supports republican'];
+  demKeywords.forEach(k=> { if (textPool.includes(k)) { dem++; evidence.push(k); }});
+  repKeywords.forEach(k=> { if (textPool.includes(k)) { rep++; evidence.push(k); }});
+  // also check organization mentions (e.g., works with party-aligned orgs)
+  if (textPool.includes('white house') || textPool.includes('administration')) dem += 0.5;
+  if (textPool.includes('capitol') || textPool.includes('senate')) rep += 0.2;
+  const total = dem+rep;
+  if (total === 0){
+    p.political = { D:0, R:0, U:100, evidence:[] };
+  } else {
+    const D = Math.round((dem/total)*100); const R = Math.round((rep/total)*100); const U = Math.max(0, 100 - D - R);
+    p.political = { D, R, U, evidence };
   }
-  html += '</div>';
-  $('archivePanel').innerHTML = html;
 }
 
-/* ---------- Wallet read-only check (solscan as best-effort) ---------- */
-async function checkWallet(addr){
-  try{
-    const url = `https://public-api.solscan.io/account/tokens?address=${addr}`;
-    const res = await fetch(url);
-    if (res.ok){
-      const j = await res.json();
-      showWallet(j);
-      toast('Wallet loaded (solscan)');
-      return;
-    }
-    // try proxy
-    try{
-      const rp = await fetch(PROXY + encodeURIComponent(url));
-      if (rp.ok){
-        const j2 = await rp.json();
-        showWallet(j2);
-        toast('Wallet via proxy loaded');
-        return;
-      }
-    }catch(e){}
-    toast('Wallet fetch blocked by CORS');
-  }catch(e){ console.warn('wallet error', e); toast('Wallet error'); }
-}
-function showWallet(tokens){
-  const left = $('left');
-  const block = document.createElement('div'); block.className = 'module';
-  block.innerHTML = '<div style="font-weight:700">Wallet snapshot</div>';
-  if (!tokens || tokens.length === 0) block.innerHTML += '<div class="small muted-ink">No tokens or blocked</div>';
-  else tokens.slice(0,8).forEach(t => block.innerHTML += `<div class="small">${t.tokenSymbol || t.tokenName} • ${(t.uiAmountString || t.amount || '-')}</div>`);
-  left.appendChild(block);
+/* produce short summary of political inference for UI */
+function politicalSummary(p){
+  if (!p.political) return '';
+  const pol = p.political;
+  if (pol.U >= 90) return 'Political leaning: Unknown';
+  return `Political: D ${pol.D}% • R ${pol.R}% • U ${pol.U}% • Evidence: ${pol.evidence.slice(0,3).join(', ') || '—'}`;
 }
 
-/* ---------- Utility formatting ---------- */
+/* surface person into AI panel (Vision 2) - create mission */
+function surfacePerson(pid){
+  const p = people.find(x=>x.id === pid); if (!p) return;
+  const mission = [
+    `Check current chart and indicators for ${selected?selected.symbol.toUpperCase():'[no asset]'} (EMA/Rsi/MACD).`,
+    `Summarize top 2 headlines for ${p.name} and classify sentiment.`,
+    `Check on-chain & DexScreener signals for tokens mentioned.`,
+    `Produce a watchlist with risk bullets (liquidity, concentration).`,
+    `Archive mission details locally.`
+  ];
+  archiveUnshift({ type:'mission', person:p.name, asset:selected?selected.symbol:'', steps:mission, ts:Date.now() });
+  toast('Mission created for ' + p.name);
+}
+
+/* ------------------ NEWS GRID: top headlines across people ------------------ */
+function renderNewsGrid(){
+  const grid = $('newsGrid'); grid.innerHTML = '';
+  // show first headline from top 12 people quickly
+  const topPeople = people.slice(0,12);
+  topPeople.forEach(p=>{
+    const n = (p.news && p.news[0]) || { title: p.name + ' — no headlines', link:'#', img:null };
+    const div = document.createElement('div'); div.className='news-card';
+    div.innerHTML = `<img class="news-thumb" src="${n.img||''}" onerror="this.style.display='none'"><div style="flex:1"><div style="font-weight:700">${n.title}</div><div class="small" style="margin-top:8px">${p.name} • <a href="${n.link}" target="_blank" style="color:var(--muted);text-decoration:none">${n.link}</a></div></div>`;
+    grid.appendChild(div);
+  });
+}
+
+/* ------------------ Archive helpers ------------------ */
+let archiveEntries = [];
+function archiveUnshift(item){ archiveEntries.unshift(item); const display = archiveEntries.slice(0,300).map(a=> `${new Date(a.ts).toLocaleString()} • ${a.type} • ${a.text || (a.steps? a.steps.join('; '): (a.flags? a.flags.join(', '):''))}` ).join('\n'); /* keep only local */ }
+function openArchive(){ alert('Archive entries: ' + archiveEntries.length + '\\nOpen console to inspect archiveEntries'); console.log('ArchiveEntries', archiveEntries); }
+
+/* ------------------ People & News bootstrapping ------------------ */
+async function bootPeopleAndNews(){
+  initPeople();
+  // render news grid early
+  setTimeout(()=> renderNewsGrid(), 1400);
+}
+
+/* ------------------ Utility & formatting ------------------ */
 function formatMcap(n){ if(!n) return '-'; if(n>1e12) return (n/1e12).toFixed(2)+'T'; if(n>1e9) return (n/1e9).toFixed(2)+'B'; if(n>1e6) return (n/1e6).toFixed(2)+'M'; return '$'+Number(n).toFixed(0); }
-function formatPrice(n){ if(n===null||n===undefined) return '-'; if(n>1e9) return '$'+(n/1e9).toFixed(2)+'B'; if(n>1e6) return '$'+(n/1e6).toFixed(2)+'M'; if(n>1e3) return '$'+(n/1e3).toFixed(2)+'k'; return '$'+Number(n).toFixed(4); }
 
-/* ---------- Safe wrappers that respect proxy fallbacks ---------- */
-async function safeJSONFetch(url){
-  try{ return await fetchWithFallback(url, true); }catch(e){ console.warn('safeJSONFetch fail', url, e); throw e; }
-}
-async function safeTextFetch(url){
-  try{ return await fetchWithFallback(url, false); }catch(e){ console.warn('safeTextFetch fail', url, e); return null; }
-}
+/* ------------------ Event bindings ------------------ */
+$('btnRefresh').addEventListener('click', ()=> { loadTopCoins(); toast('Refreshing coins...'); });
+$('btnLoadPeople').addEventListener('click', ()=> { bootPeopleAndNews(); toast('Loading people...'); });
+$('btnOpenArchive').addEventListener('click', ()=> { openArchive(); });
+$('btnRunMission').addEventListener('click', ()=> { if (!selected) return toast('Select asset or person first'); toast('Mission executed (simulated)'); });
 
-/* ---------- Event bindings ---------- */
-$('btnRefresh').addEventListener('click', ()=> loadTopCoins());
-$('btnLoadPeople').addEventListener('click', ()=> { buildPeopleAlwaysVisible(); toast('Loading people (progressive)'); });
-$('btnScanRadar').addEventListener('click', ()=> scanMarketRadar());
-$('btnOpenArchive').addEventListener('click', ()=> openArchivePanel());
-$('btnCheckWallet').addEventListener('click', ()=> checkWallet(SOLANA_WALLET));
-$('btnRunMission').addEventListener('click', ()=> { if (!selected) return toast('Select asset or person'); toast('Mission executed (simulated)'); });
-
-/* ---------- Boot sequence ---------- */
-(async function boot(){
-  toast('Initializing Five-Vision dashboard — progressive loads starting');
+/* ------------------ Boot sequence ------------------ */
+(async function init(){
+  toast('Initializing — visible-first-load in ~5-15s depending on network');
   await loadTopCoins();
-  buildPeopleAlwaysVisible();
-  // auto-scan radar on startup (best-effort)
-  setTimeout(()=> scanMarketRadar(), 2500);
-  // periodic background tasks
-  setInterval(()=> { if (selected) loadAndRenderChart(selected.id, parseInt($('tfSelector').value)); }, 1000 * 60 * 5); // refresh every 5 minutes
+  bootPeopleAndNews();
+  // auto-select first coin for demo if available
+  if (coins && coins.length) selectAsset(coins[0].symbol);
 })();
 
-/* ---------- Expose small debug API to console ---------- */
-window.__FiveVision = {
-  coins, people, archive, selectAsset: onAssetClicked, createMissionFromPerson, buildPeopleAlwaysVisible
-};
 </script>
-
 </body>
 </html>
-
-
